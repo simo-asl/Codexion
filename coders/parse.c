@@ -5,12 +5,30 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: mel-asla <mel-asla@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/03/21 09:24:09 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/03/21 10:28:09 by mel-asla         ###   ########.fr       */
+/*   Created: 2026/04/07 19:21:48 by mel-asla          #+#    #+#             */
+/*   Updated: 2026/04/14 17:41:46 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
+
+static int	validate_args(int argc, char **argv)
+{
+	int	idx;
+
+	if (argc != 9)
+		return (1);
+	idx = 1;
+	while (idx <= 7)
+	{
+		if (!is_number(argv[idx]))
+			return (1);
+		idx++;
+	}
+	if (strcmp(argv[8], "fifo") != 0 && strcmp(argv[8], "edf") != 0)
+		return (1);
+	return (0);
+}
 
 int	parse_scheduler(const char *str, t_scheduler_type *scheduler)
 {

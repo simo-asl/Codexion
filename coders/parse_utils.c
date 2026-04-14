@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: mel-asla <mel-asla@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/03/21 07:11:56 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/03/21 10:28:44 by mel-asla         ###   ########.fr       */
+/*   Created: 2026/04/07 11:33:09 by mel-asla          #+#    #+#             */
+/*   Updated: 2026/04/14 18:32:53 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -109,23 +109,5 @@ int	parse_non_negative_long(const char *str, long *value)
 		i++;
 	}
 	*value = (long)result;
-	return (0);
-}
-
-int	validate_args(int argc, char **argv)
-{
-	int	idx;
-
-	if (argc != 9)
-		return (1);
-	idx = 1;
-	while (idx <= 7)
-	{
-		if (!is_number(argv[idx]))
-			return (1);
-		idx++;
-	}
-	if (strcmp(argv[8], "fifo") != 0 && strcmp(argv[8], "edf") != 0)
-		return (1);
 	return (0);
 }
