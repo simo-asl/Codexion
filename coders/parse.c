@@ -6,7 +6,7 @@
 /*   By: mel-asla <mel-asla@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/07 19:21:48 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/04/14 17:41:46 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/04/14 19:12:51 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,7 +59,7 @@ int	parse_args(t_table *table, int argc, char **argv)
 		return (1);
 	if (parse_positive_long(argv[5], &table->time_to_refactor) != 0)
 		return (1);
-	if (parse_non_negative_int(argv[6], &table->required_compiles) != 0)
+	if (parse_positive_int(argv[6], &table->required_compiles) != 0)
 		return (1);
 	if (parse_non_negative_long(argv[7], &table->dongle_cooldown) != 0)
 		return (1);
