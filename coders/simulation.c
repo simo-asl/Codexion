@@ -6,10 +6,11 @@
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/11 12:26:14 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/04/18 14:16:41 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/04/18 14:17:35 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "codexion.h"
 
 static int	start_coder_threads(t_table *table)
 {
