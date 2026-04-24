@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/11 08:49:55 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/04/16 16:23:54 by mel-asla         ###   ########.fr       */
+/*   Created: 2026/04/14 08:49:55 by mel-asla          #+#    #+#             */
+/*   Updated: 2026/04/24 08:30:40 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,13 +50,16 @@ int	init_request_queue(t_heap *heap, int capacity)
 void	assign_dongles(t_table *table)
 {
 	int	i;
+	int	right_index;
 
 	i = 0;
 	while (i < table->coder_count)
 	{
+		right_index = i + 1;
+		if (right_index == table->coder_count)
+			right_index = 0;
 		table->coders[i].left_dongle = &table->dongles[i];
-		table->coders[i].right_dongle = &table->dongles[(i + 1)
-			% table->coder_count];
+		table->coders[i].right_dongle = &table->dongles[right_index];
 		i++;
 	}
 }
