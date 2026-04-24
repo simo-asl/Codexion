@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   prototypes.h                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mel-asla <mel-asla@student.1337.ma>        +#+  +:+       +#+        */
+/*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/03/19 09:34:38 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/04/14 17:51:02 by mel-asla         ###   ########.fr       */
+/*   Created: 2026/04/14 09:34:38 by mel-asla          #+#    #+#             */
+/*   Updated: 2026/04/23 00:33:45 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,9 +19,9 @@ int		parse_args(t_table *table, int argc, char **argv);
 int		parse_scheduler(const char *str, t_scheduler_type *scheduler);
 int		parse_positive_int(const char *str, int *value);
 int		parse_positive_long(const char *str, long *value);
-int		parse_non_negative_int(const char *str, int *value);
 int		parse_non_negative_long(const char *str, long *value);
 int		is_number(const char *str);
+long	ft_atol(const char *str);
 
 int		init_table(t_table *table, int argc, char **argv);
 int		init_coders(t_table *table);
@@ -44,8 +44,12 @@ void	set_dongle_cooldown(t_dongle *dongle, long cooldown, long now);
 int		request_dongles(t_coder *coder);
 void	remove_request(t_table *table, int coder_id);
 bool	can_grant_request(t_table *table, t_coder *coder);
+int		enqueue_request(t_coder *coder);
+int		find_best_eligible_request(t_table *table, long now);
+void	remove_request_at_index(t_table *table, int index);
 int		compare_requests(t_request a, t_request b, t_scheduler_type type);
 bool	both_dongles_available(t_coder *coder, long now);
+bool	reserve_dongles_if_available(t_coder *coder, long now);
 long	max_ready_time_ms(t_coder *coder);
 void	build_timeout(long delay_ms, struct timespec *timeout);
 
