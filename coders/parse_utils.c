@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   parse_utils.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mel-asla <mel-asla@student.1337.ma>        +#+  +:+       +#+        */
+/*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/07 11:33:09 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/04/14 18:32:53 by mel-asla         ###   ########.fr       */
+/*   Created: 2026/04/14 11:33:09 by mel-asla          #+#    #+#             */
+/*   Updated: 2026/04/25 00:54:34 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,86 +28,54 @@ int	is_number(const char *str)
 	return (1);
 }
 
+long	ft_atol(const char *str)
+{
+	long long	result;
+	int			i;
+
+	if (!is_number(str))
+		return (-1);
+	result = 0;
+	i = 0;
+	while (str[i])
+	{
+		result = result * 10 + (str[i] - '0');
+		if (result > LONG_MAX)
+			return (-1);
+		i++;
+	}
+	return ((long)result);
+}
+
 int	parse_positive_int(const char *str, int *value)
 {
 	long	result;
-	int		i;
 
-	if (!is_number(str))
+	result = ft_atol(str);
+	if (result <= 0 || result > INT_MAX)
 		return (1);
-	result = 0;
-	i = 0;
-	while (str[i])
-	{
-		result = result * 10 + (str[i] - '0');
-		if (result > 2147483647)
-			return (1);
-		i++;
-	}
-	if (result <= 0)
-		return (1);
-	*value = (int)result;
-	return (0);
-}
-
-int	parse_non_negative_int(const char *str, int *value)
-{
-	long	result;
-	int		i;
-
-	if (!is_number(str))
-		return (1);
-	result = 0;
-	i = 0;
-	while (str[i])
-	{
-		result = result * 10 + (str[i] - '0');
-		if (result > 2147483647)
-			return (1);
-		i++;
-	}
 	*value = (int)result;
 	return (0);
 }
 
 int	parse_positive_long(const char *str, long *value)
 {
-	long long	result;
-	int			i;
+	long	result;
 
-	if (!is_number(str))
-		return (1);
-	result = 0;
-	i = 0;
-	while (str[i])
-	{
-		result = result * 10 + (str[i] - '0');
-		if (result > 9223372036854775807LL)
-			return (1);
-		i++;
-	}
+	result = ft_atol(str);
 	if (result <= 0)
 		return (1);
-	*value = (long)result;
+	*value = result;
 	return (0);
 }
 
 int	parse_non_negative_long(const char *str, long *value)
 {
-	long long	result;
-	int			i;
+	long	result;
 
-	if (!is_number(str))
+	result = ft_atol(str);
+	if (result < 0)
 		return (1);
-	result = 0;
-	i = 0;
-	while (str[i])
-	{
-		result = result * 10 + (str[i] - '0');
-		if (result > 9223372036854775807LL)
-			return (1);
-		i++;
-	}
-	*value = (long)result;
+	*value = result;
 	return (0);
 }
