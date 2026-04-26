@@ -6,7 +6,7 @@
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/14 09:55:18 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/04/24 04:04:38 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/04/26 18:39:16 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,45 +14,16 @@
 
 static long	get_raw_timestamp_ms(void)
 {
-	struct timeval	tv;
+	struct timespec	ts;
 
-	if (gettimeofday(&tv, NULL) != 0)
+	if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
 		return (0);
-	return ((tv.tv_sec * 1000L) + (tv.tv_usec / 1000L));
-}
-
-static pthread_mutex_t	*get_time_mutex(void)
-{
-	static pthread_mutex_t	time_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-	return (&time_mutex);
+	return ((ts.tv_sec * 1000L) + (ts.tv_nsec / 1000000L));
 }
 
 long	get_timestamp_ms(void)
 {
-	static long			state[3];
-	long				raw_ms;
-	long				delta;
-
-	raw_ms = get_raw_timestamp_ms();
-	pthread_mutex_lock(get_time_mutex());
-	if (!state[0])
-	{
-		state[0] = 1;
-		state[1] = raw_ms;
-		state[2] = raw_ms;
-		pthread_mutex_unlock(get_time_mutex());
-		return (raw_ms);
-	}
-	delta = raw_ms - state[1];
-	if (delta < 0)
-		delta = 0;
-	if (delta > 1000)
-		delta = 1;
-	state[2] += delta;
-	state[1] = raw_ms;
-	pthread_mutex_unlock(get_time_mutex());
-	return (state[2]);
+	return (get_raw_timestamp_ms());
 }
 
 long	get_elapsed_time_ms(long start_time)
