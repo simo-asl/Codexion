@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/14 00:04:58 by mel-asla              #+#    #+#             */
-/*   Updated: 2026/04/18 19:11:01 by mel-asla         ###   ########.fr       */
+/*   Created: 2026/04/14 00:00:00 by symo              #+#    #+#             */
+/*   Updated: 2026/04/26 18:39:16 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,15 +27,35 @@ bool	both_dongles_available(t_coder *coder, long now)
 {
 	t_dongle	*first;
 	t_dongle	*second;
-	bool		ok;
+	bool		left_available;
+	bool		right_available;
 
 	set_lock_order(coder, &first, &second);
 	pthread_mutex_lock(&first->mutex);
 	if (second != first)
 		pthread_mutex_lock(&second->mutex);
-	ok = dongle_is_available(coder->left_dongle, now)
-		&& dongle_is_available(coder->right_dongle, now);
-	if (ok)
+	left_available = dongle_is_available(coder->left_dongle, now);
+	right_available = dongle_is_available(coder->right_dongle, now);
+	if (second != first)
+		pthread_mutex_unlock(&second->mutex);
+	pthread_mutex_unlock(&first->mutex);
+	return (left_available && right_available);
+}
+
+bool	reserve_dongles_if_available(t_coder *coder, long now)
+{
+	t_dongle	*first;
+	t_dongle	*second;
+	bool		right_available;
+	bool		left_available;
+
+	set_lock_order(coder, &first, &second);
+	pthread_mutex_lock(&first->mutex);
+	if (second != first)
+		pthread_mutex_lock(&second->mutex);
+	left_available = dongle_is_available(coder->left_dongle, now);
+	right_available = dongle_is_available(coder->right_dongle, now);
+	if (left_available && right_available)
 	{
 		coder->left_dongle->in_use = true;
 		coder->right_dongle->in_use = true;
@@ -43,7 +63,7 @@ bool	both_dongles_available(t_coder *coder, long now)
 	if (second != first)
 		pthread_mutex_unlock(&second->mutex);
 	pthread_mutex_unlock(&first->mutex);
-	return (ok);
+	return (left_available && right_available);
 }
 
 long	max_ready_time_ms(t_coder *coder)
@@ -71,8 +91,8 @@ void	build_timeout(long delay_ms, struct timespec *timeout)
 	long			sec;
 	long			nsec;
 
-	if (delay_ms < 1)
-		delay_ms = 1;
+	if (delay_ms < 0)
+		delay_ms = 0;
 	if (gettimeofday(&now, NULL) != 0)
 	{
 		timeout->tv_sec = 0;
