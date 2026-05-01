@@ -6,11 +6,33 @@
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/14 08:49:55 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/04/24 08:30:40 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/05/01 12:58:36 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
+
+static int	init_mutexes2(t_table *table)
+{
+	if (pthread_mutex_init(&table->start_mutex, NULL) != 0)
+	{
+		pthread_cond_destroy(&table->request_cond);
+		pthread_mutex_destroy(&table->request_mutex);
+		pthread_mutex_destroy(&table->log_mutex);
+		pthread_mutex_destroy(&table->state_mutex);
+		return (1);
+	}
+	if (pthread_cond_init(&table->start_cond, NULL) != 0)
+	{
+		pthread_mutex_destroy(&table->start_mutex);
+		pthread_cond_destroy(&table->request_cond);
+		pthread_mutex_destroy(&table->request_mutex);
+		pthread_mutex_destroy(&table->log_mutex);
+		pthread_mutex_destroy(&table->state_mutex);
+		return (1);
+	}
+	return (0);
+}
 
 int	init_mutexes(t_table *table)
 {
@@ -34,6 +56,8 @@ int	init_mutexes(t_table *table)
 		pthread_mutex_destroy(&table->state_mutex);
 		return (1);
 	}
+	if (init_mutexes2(table) != 0)
+		return (1);
 	return (0);
 }
 
