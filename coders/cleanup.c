@@ -6,7 +6,7 @@
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/14 08:12:47 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/04/24 04:06:04 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/05/01 10:16:58 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,8 @@ void	destroy_mutexes(t_table *table)
 	pthread_mutex_destroy(&table->log_mutex);
 	pthread_mutex_destroy(&table->request_mutex);
 	pthread_cond_destroy(&table->request_cond);
+	pthread_mutex_destroy(&table->start_mutex);
+	pthread_cond_destroy(&table->start_cond);
 }
 
 void	free_table(t_table *table)
@@ -39,11 +41,4 @@ void	free_table(t_table *table)
 	free(table->coders);
 	table->dongles = NULL;
 	table->coders = NULL;
-}
-
-void	cleanup_and_exit(t_table *table, int exit_code)
-{
-	(void)exit_code;
-	destroy_mutexes(table);
-	free_table(table);
 }
