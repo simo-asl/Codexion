@@ -6,7 +6,7 @@
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/14 10:17:06 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/04/24 04:05:09 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/05/01 17:58:07 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,8 @@ int	init_coders(t_table *table)
 		coder->left_dongle = NULL;
 		coder->right_dongle = NULL;
 		coder->last_compile_start_ms = table->start_time_ms;
+		coder->last_round = -1;
+		coder->compiles_in_round = 0;
 		coder->compiles_done = 0;
 		coder->in_wait_queue = false;
 		coder->state = STATE_IDLE;
@@ -69,7 +71,10 @@ int	init_table(t_table *table, int argc, char **argv)
 		return (1);
 	table->start_time_ms = get_timestamp_ms();
 	table->simulation_end = false;
+	table->start_released = false;
 	table->next_sequence = 0;
+	table->round = 0;
+	table->completed_in_round = 0;
 	if (init_coders(table) != 0)
 		return (1);
 	if (init_dongles(table) != 0)
