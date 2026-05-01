@@ -6,7 +6,7 @@
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/14 09:34:47 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/05/01 12:49:18 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/05/01 17:58:07 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,6 +68,7 @@ typedef struct s_coder
 	bool				in_wait_queue;
 	t_coder_state		state;
 	int					last_round;
+	int					compiles_in_round;
 }	t_coder;
 
 struct s_table
