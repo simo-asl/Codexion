@@ -6,7 +6,7 @@
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/14 09:34:47 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/04/24 04:04:33 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/05/01 12:49:18 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,6 +67,7 @@ typedef struct s_coder
 	int					compiles_done;
 	bool				in_wait_queue;
 	t_coder_state		state;
+	int					last_round;
 }	t_coder;
 
 struct s_table
@@ -90,6 +91,11 @@ struct s_table
 	pthread_mutex_t		log_mutex;
 	pthread_mutex_t		request_mutex;
 	pthread_cond_t		request_cond;
+	pthread_mutex_t		start_mutex;
+	pthread_cond_t		start_cond;
+	bool				start_released;
+	int					round;
+	int					completed_in_round;
 };
 
 #endif

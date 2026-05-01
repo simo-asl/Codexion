@@ -6,7 +6,7 @@
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/14 09:34:38 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/04/23 00:33:45 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/05/01 12:58:36 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,8 +33,6 @@ void	assign_dongles(t_table *table);
 int		start_simulation(t_table *table);
 void	*coder_routine(void *arg);
 int		coder_compile(t_coder *coder);
-int		coder_debug(t_coder *coder);
-int		coder_refactor(t_coder *coder);
 
 int		take_dongles(t_coder *coder);
 void	release_dongles(t_coder *coder);
@@ -46,7 +44,6 @@ void	remove_request(t_table *table, int coder_id);
 bool	can_grant_request(t_table *table, t_coder *coder);
 int		enqueue_request(t_coder *coder);
 int		find_best_eligible_request(t_table *table, long now);
-void	remove_request_at_index(t_table *table, int index);
 int		compare_requests(t_request a, t_request b, t_scheduler_type type);
 bool	both_dongles_available(t_coder *coder, long now);
 bool	reserve_dongles_if_available(t_coder *coder, long now);
@@ -54,7 +51,7 @@ long	max_ready_time_ms(t_coder *coder);
 void	build_timeout(long delay_ms, struct timespec *timeout);
 
 int		heap_push(t_heap *heap, t_request request, t_scheduler_type type);
-int		heap_pop(t_heap *heap, t_request *out, t_scheduler_type type);
+void	update_round_after_compile(t_table *table);
 
 void	heapify_up(t_heap *heap, int index, t_scheduler_type type);
 void	heapify_down(t_heap *heap, int index, t_scheduler_type type);
@@ -77,6 +74,5 @@ void	precise_sleep(long duration_ms, t_table *table);
 
 void	destroy_mutexes(t_table *table);
 void	free_table(t_table *table);
-void	cleanup_and_exit(t_table *table, int exit_code);
 
 #endif
