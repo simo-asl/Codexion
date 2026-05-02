@@ -6,26 +6,11 @@
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 00:00:00 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/04/24 04:09:26 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/05/01 18:46:27 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
-
-void	remove_request_at_index(t_table *table, int index)
-{
-	t_heap	*heap;
-
-	heap = &table->request_heap;
-	if (index < 0 || index >= heap->size)
-		return ;
-	heap->size--;
-	if (index == heap->size)
-		return ;
-	heap->items[index] = heap->items[heap->size];
-	heapify_down(heap, index, table->scheduler);
-	heapify_up(heap, index, table->scheduler);
-}
 
 static void	update_best_request(t_table *table, int i,
 								int *best_index, t_request *best_request)
@@ -68,7 +53,10 @@ int	enqueue_request(t_coder *coder)
 
 	table = coder->table;
 	if (coder->in_wait_queue)
-		return (0);
+	{
+		remove_request(table, coder->id);
+		coder->in_wait_queue = false;
+	}
 	pthread_mutex_lock(&table->state_mutex);
 	last_start = coder->last_compile_start_ms;
 	pthread_mutex_unlock(&table->state_mutex);
@@ -79,4 +67,11 @@ int	enqueue_request(t_coder *coder)
 		return (1);
 	coder->in_wait_queue = true;
 	return (0);
+}
+
+void	update_round_after_compile(t_table *table)
+{
+	pthread_mutex_lock(&table->request_mutex);
+	pthread_cond_broadcast(&table->request_cond);
+	pthread_mutex_unlock(&table->request_mutex);
 }
