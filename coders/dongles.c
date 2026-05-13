@@ -6,22 +6,11 @@
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/14 07:58:11 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/05/10 13:21:00 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/05/13 03:34:34 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
-
-static void	set_lock_order(t_coder *coder, t_dongle **first, t_dongle **second)
-{
-	*first = coder->left_dongle;
-	*second = coder->right_dongle;
-	if (*second < *first)
-	{
-		*first = coder->right_dongle;
-		*second = coder->left_dongle;
-	}
-}
 
 bool	dongle_is_available(t_dongle *dongle, long now)
 {
