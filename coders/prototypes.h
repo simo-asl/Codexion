@@ -6,7 +6,7 @@
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/14 09:34:38 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/05/01 12:58:36 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/05/13 03:34:50 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,6 @@ int		parse_args(t_table *table, int argc, char **argv);
 int		parse_scheduler(const char *str, t_scheduler_type *scheduler);
 int		parse_positive_int(const char *str, int *value);
 int		parse_positive_long(const char *str, long *value);
-int		parse_non_negative_long(const char *str, long *value);
 int		is_number(const char *str);
 long	ft_atol(const char *str);
 
@@ -41,6 +40,7 @@ void	set_dongle_cooldown(t_dongle *dongle, long cooldown, long now);
 
 int		request_dongles(t_coder *coder);
 void	remove_request(t_table *table, int coder_id);
+void	set_lock_order(t_coder *coder, t_dongle **first, t_dongle **second);
 bool	can_grant_request(t_table *table, t_coder *coder);
 int		enqueue_request(t_coder *coder);
 int		find_best_eligible_request(t_table *table, long now);
