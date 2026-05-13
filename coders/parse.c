@@ -6,7 +6,7 @@
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/14 19:21:48 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/05/12 00:57:56 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/05/13 00:15:14 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,17 +51,17 @@ int	parse_args(t_table *table, int argc, char **argv)
 		return (1);
 	if (parse_positive_int(argv[1], &table->coder_count) != 0)
 		return (1);
-	if (parse_non_negative_long(argv[2], &table->time_to_burnout) != 0)
+	if (parse_positive_long(argv[2], &table->time_to_burnout) != 0)
 		return (1);
-	if (parse_non_negative_long(argv[3], &table->time_to_compile) != 0)
+	if (parse_positive_long(argv[3], &table->time_to_compile) != 0)
 		return (1);
-	if (parse_non_negative_long(argv[4], &table->time_to_debug) != 0)
+	if (parse_positive_long(argv[4], &table->time_to_debug) != 0)
 		return (1);
-	if (parse_non_negative_long(argv[5], &table->time_to_refactor) != 0)
+	if (parse_positive_long(argv[5], &table->time_to_refactor) != 0)
 		return (1);
 	if (parse_positive_int(argv[6], &table->required_compiles) != 0)
 		return (1);
-	if (parse_non_negative_long(argv[7], &table->dongle_cooldown) != 0)
+	if (parse_positive_long(argv[7], &table->dongle_cooldown) != 0)
 		return (1);
 	if (parse_scheduler(argv[8], &table->scheduler) != 0)
 		return (1);
