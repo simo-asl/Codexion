@@ -6,102 +6,84 @@
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/14 10:41:27 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/05/01 11:04:19 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/06/11 09:14:46 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-bool	get_simulation_end(t_table *table)
+bool	need_to_stop(t_runtime *sim)
 {
-	bool	value;
+	bool	stop_flag;
 
-	pthread_mutex_lock(&table->state_mutex);
-	value = table->simulation_end;
-	pthread_mutex_unlock(&table->state_mutex);
-	return (value);
+	pthread_mutex_lock(&sim->request_mutex);
+	stop_flag = sim->stop_requested;
+	pthread_mutex_unlock(&sim->request_mutex);
+	return (stop_flag);
 }
 
-void	set_simulation_end(t_table *table, bool value)
+void	request_stop(t_runtime *sim)
 {
-	pthread_mutex_lock(&table->state_mutex);
-	table->simulation_end = value;
-	pthread_mutex_unlock(&table->state_mutex);
-	if (value)
-	{
-		pthread_mutex_lock(&table->request_mutex);
-		pthread_cond_broadcast(&table->request_cond);
-		pthread_mutex_unlock(&table->request_mutex);
-	}
+	pthread_mutex_lock(&sim->request_mutex);
+	sim->stop_requested = 1;
+	pthread_cond_broadcast(&sim->request_cond);
+	pthread_mutex_unlock(&sim->request_mutex);
 }
 
-int	check_burnout(t_coder *coder)
+static int	has_burned_out(t_runtime *sim,
+	int index, long long current_time, int *all_finish)
 {
-	t_table	*table;
-	long	now;
-	long	deadline;
+	long long	burn_out;
+	long long	time_to_die;
+	int			compile_count;
 
-	table = coder->table;
-	now = get_timestamp_ms();
-	pthread_mutex_lock(&table->state_mutex);
-	if (table->required_compiles > 0
-		&& coder->compiles_done >= table->required_compiles)
+	pthread_mutex_lock(&sim->coders[index].state_mutex);
+	time_to_die = sim->coders[index].burnout_deadline;
+	compile_count = sim->coders[index].completed_compiles;
+	pthread_mutex_unlock(&sim->coders[index].state_mutex);
+	if (compile_count >= sim->config.compiles_required)
 	{
-		pthread_mutex_unlock(&table->state_mutex);
+		*all_finish += 1;
 		return (0);
 	}
-	deadline = coder->last_compile_start_ms + table->time_to_burnout;
-	if (!table->simulation_end && now >= deadline)
-	{
-		pthread_mutex_unlock(&table->state_mutex);
-		set_simulation_end(table, true);
-		print_burnout(coder);
-		return (1);
-	}
-	pthread_mutex_unlock(&table->state_mutex);
-	return (0);
+	if (current_time < time_to_die)
+		return (0);
+	request_stop(sim);
+	pthread_mutex_lock(&sim->request_mutex);
+	burn_out = get_time_in_ms() - sim->start_time_ms;
+	pthread_mutex_unlock(&sim->request_mutex);
+	pthread_mutex_lock(&sim->log_mutex);
+	printf("%lld %lld burned out\n", burn_out,
+		sim->coders[index].id);
+	pthread_mutex_unlock(&sim->log_mutex);
+	return (1);
 }
 
-bool	all_compiles_completed(t_table *table)
+void	*monitor_loop(void *arg)
 {
-	int	i;
+	t_runtime	*sim;
+	long long	current_time;
+	int			index;
+	int			all_finish;
 
-	if (table->required_compiles <= 0)
-		return (false);
-	pthread_mutex_lock(&table->state_mutex);
-	i = 0;
-	while (i < table->coder_count)
+	sim = (t_runtime *)arg;
+	while (!need_to_stop(sim))
 	{
-		if (table->coders[i].compiles_done < table->required_compiles)
+		current_time = get_time_in_ms();
+		index = 0;
+		all_finish = 0;
+		while (index < sim->config.num_coders)
 		{
-			pthread_mutex_unlock(&table->state_mutex);
-			return (false);
-		}
-		i++;
-	}
-	pthread_mutex_unlock(&table->state_mutex);
-	set_simulation_end(table, true);
-	return (true);
-}
-
-void	*monitor_routine(void *arg)
-{
-	t_table	*table;
-	int		i;
-
-	table = (t_table *)arg;
-	while (!get_simulation_end(table))
-	{
-		i = 0;
-		while (i < table->coder_count)
-		{
-			if (check_burnout(&table->coders[i]) != 0)
+			if (has_burned_out(sim, index, current_time, &all_finish))
 				return (NULL);
-			i++;
+			index++;
 		}
-		if (all_compiles_completed(table))
+		if (all_finish >= sim->config.num_coders)
+		{
+			request_stop(sim);
 			return (NULL);
-		usleep(500);
+		}
+		smart_sleep(5, sim);
 	}
 	return (NULL);
 }

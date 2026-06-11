@@ -6,7 +6,7 @@
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/14 09:34:38 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/05/13 03:34:50 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/06/11 09:14:36 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,64 +15,51 @@
 
 # include "structs.h"
 
-int		parse_args(t_table *table, int argc, char **argv);
-int		parse_scheduler(const char *str, t_scheduler_type *scheduler);
-int		parse_positive_int(const char *str, int *value);
-int		parse_positive_long(const char *str, long *value);
-int		is_number(const char *str);
-long	ft_atol(const char *str);
+int				parse_args(t_parse_input *input, int argc, char **argv);
+int				parse_scheduler(const char *str, t_scheduler_type *scheduler);
+bool			is_number(const char *str);
+long long		ft_atol(const char *str);
+int				parse_positive_int(const char *str, int *value);
+int				parse_positive_long(const char *str, long *value);
+int				parse_non_negative_long(const char *str, long *value);
 
-int		init_table(t_table *table, int argc, char **argv);
-int		init_coders(t_table *table);
-int		init_dongles(t_table *table);
-int		init_mutexes(t_table *table);
-int		init_request_queue(t_heap *heap, int capacity);
-void	assign_dongles(t_table *table);
+int				init_runtime(t_runtime *sim);
 
-int		start_simulation(t_table *table);
-void	*coder_routine(void *arg);
-int		coder_compile(t_coder *coder);
+int				run_coders(t_runtime *sim);
+void			*monitor_loop(void *arg);
+void			*coder_thread(void *arg);
 
-int		take_dongles(t_coder *coder);
-void	release_dongles(t_coder *coder);
-bool	dongle_is_available(t_dongle *dongle, long now);
-void	set_dongle_cooldown(t_dongle *dongle, long cooldown, long now);
+void			do_compile(t_coder *coder);
+void			debug_and_refactor(t_coder *coder);
+int				acquire_dongles(t_coder *coder);
+void			release_dongles(t_coder *coder);
 
-int		request_dongles(t_coder *coder);
-void	remove_request(t_table *table, int coder_id);
-void	set_lock_order(t_coder *coder, t_dongle **first, t_dongle **second);
-bool	can_grant_request(t_table *table, t_coder *coder);
-int		enqueue_request(t_coder *coder);
-int		find_best_eligible_request(t_table *table, long now);
-int		compare_requests(t_request a, t_request b, t_scheduler_type type);
-bool	both_dongles_available(t_coder *coder, long now);
-bool	reserve_dongles_if_available(t_coder *coder, long now);
-long	max_ready_time_ms(t_coder *coder);
-void	build_timeout(long delay_ms, struct timespec *timeout);
+bool			is_top_of_heap(t_dongle *dongle, t_coder *coder);
+void			lock_order(t_coder *coder, t_dongle **first, t_dongle **second);
+void			cleanup_heaps_locked(t_coder *coder);
 
-int		heap_push(t_heap *heap, t_request request, t_scheduler_type type);
-void	update_round_after_compile(t_table *table);
+int				join_coder_threads(t_runtime *sim, int end);
+bool			need_to_stop(t_runtime *sim);
+void			request_stop(t_runtime *sim);
 
-void	heapify_up(t_heap *heap, int index, t_scheduler_type type);
-void	heapify_down(t_heap *heap, int index, t_scheduler_type type);
-void	copy_requests(t_request *dst, t_request *src, int count);
-void	swap_requests(t_request *a, t_request *b);
-void	free_heap(t_heap *heap);
+void			cleanup_all(t_runtime *sim);
+void			cleanup_dongles(t_runtime *sim, int num_coders);
 
-void	*monitor_routine(void *arg);
-int		check_burnout(t_coder *coder);
-bool	all_compiles_completed(t_table *table);
-void	set_simulation_end(t_table *table, bool value);
-bool	get_simulation_end(t_table *table);
+long long		get_time_in_ms(void);
+void			smart_sleep(long long time_to_sleep, t_runtime *sim);
 
-void	print_status(t_coder *coder, const char *msg);
-void	print_burnout(t_coder *coder);
+void			log_event(t_coder *coder, const char *action);
 
-long	get_timestamp_ms(void);
-long	get_elapsed_time_ms(long start_time);
-void	precise_sleep(long duration_ms, t_table *table);
-
-void	destroy_mutexes(t_table *table);
-void	free_table(t_table *table);
+t_queue			*heap_init(int max_size, t_scheduler_type scheduler);
+bool			heap_is_empty(t_queue *queue);
+bool			heap_is_full(t_queue *queue);
+int				heap_insert(t_queue *queue, t_coder *coder);
+void			bubble_up(t_queue *queue, int index);
+void			bubble_down(t_queue *queue, int index, int size);
+void			heap_remove_at(t_queue *queue, int index);
+int				heap_find_index(t_queue *queue, t_coder *coder);
+void			lock_dongles(t_dongle *first, t_dongle *second, int heap_lock);
+void			unlock_dongles(t_dongle *first,
+					t_dongle *second, int heap_lock);
 
 #endif

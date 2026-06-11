@@ -5,40 +5,49 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/14 00:00:00 by symo              #+#    #+#             */
-/*   Updated: 2026/04/24 04:05:45 by mel-asla         ###   ########.fr       */
+/*   Created: 2026/04/14 00:00:00 by mel-asla          #+#    #+#             */
+/*   Updated: 2026/06/11 09:15:07 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-void	copy_requests(t_request *dst, t_request *src, int count)
+bool	heap_is_empty(t_queue *queue)
+{
+	if (!queue)
+		return (true);
+	return (queue->size == 0);
+}
+
+bool	heap_is_full(t_queue *queue)
+{
+	if (!queue)
+		return (true);
+	return (queue->size >= queue->max_size);
+}
+
+int	heap_find_index(t_queue *queue, t_coder *coder)
 {
 	int	i;
 
+	if (!queue)
+		return (-1);
 	i = 0;
-	while (i < count)
+	while (i < queue->size)
 	{
-		dst[i] = src[i];
+		if (queue->items[i] == coder)
+			return (i);
 		i++;
 	}
+	return (-1);
 }
 
-void	swap_requests(t_request *a, t_request *b)
+int	heap_insert(t_queue *queue, t_coder *coder)
 {
-	t_request	tmp;
-
-	tmp = *a;
-	*a = *b;
-	*b = tmp;
-}
-
-void	free_heap(t_heap *heap)
-{
-	if (!heap)
-		return ;
-	free(heap->items);
-	heap->items = NULL;
-	heap->size = 0;
-	heap->capacity = 0;
+	if (!queue || !coder || heap_is_full(queue))
+		return (1);
+	queue->items[queue->size] = coder;
+	bubble_up(queue, queue->size);
+	queue->size++;
+	return (0);
 }

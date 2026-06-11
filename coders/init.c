@@ -6,81 +6,103 @@
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/14 10:17:06 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/05/01 17:58:07 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/06/11 09:15:02 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-int	init_coders(t_table *table)
+static int	init_sync(t_runtime *sim)
 {
-	int		i;
-	t_coder	*coder;
-
-	table->coders = (t_coder *)malloc(sizeof(t_coder) * table->coder_count);
-	if (!table->coders)
+	if (pthread_mutex_init(&sim->log_mutex, NULL) != 0)
 		return (1);
-	i = 0;
-	while (i < table->coder_count)
-	{
-		coder = &table->coders[i];
-		coder->id = i + 1;
-		coder->table = table;
-		coder->left_dongle = NULL;
-		coder->right_dongle = NULL;
-		coder->last_compile_start_ms = table->start_time_ms;
-		coder->last_round = -1;
-		coder->compiles_in_round = 0;
-		coder->compiles_done = 0;
-		coder->in_wait_queue = false;
-		coder->state = STATE_IDLE;
-		i++;
-	}
+	sim->log_mutex_ready = 1;
+	if (pthread_mutex_init(&sim->request_mutex, NULL) != 0)
+		return (1);
+	sim->request_mutex_ready = 1;
+	if (pthread_cond_init(&sim->request_cond, NULL) != 0)
+		return (1);
+	sim->request_cond_ready = 1;
 	return (0);
 }
 
-int	init_dongles(t_table *table)
+static int	init_alloc(t_runtime *sim)
 {
-	int	i;
-
-	table->dongles = (t_dongle *)malloc(sizeof(t_dongle) * table->coder_count);
-	if (!table->dongles)
+	sim->dongles = malloc\
+(sizeof(t_dongle) * sim->config.num_coders);
+	if (!sim->dongles)
 		return (1);
-	i = 0;
-	while (i < table->coder_count)
+	memset(sim->dongles, 0, sizeof(t_dongle) * sim->config.num_coders);
+	sim->coders = malloc(sizeof(t_coder) * sim->config.num_coders);
+	if (!sim->coders)
 	{
-		table->dongles[i].in_use = false;
-		table->dongles[i].available_at_ms = table->start_time_ms;
-		if (pthread_mutex_init(&table->dongles[i].mutex, NULL) != 0)
-		{
-			while (--i >= 0)
-				pthread_mutex_destroy(&table->dongles[i].mutex);
+		free(sim->dongles);
+		sim->dongles = NULL;
+		return (1);
+	}
+	memset(sim->coders, 0, sizeof(t_coder) * sim->config.num_coders);
+	return (0);
+}
+
+static int	init_dongles(t_runtime *sim)
+{
+	int	index;
+
+	index = 0;
+	while (index < sim->config.num_coders)
+	{
+		sim->dongles[index].in_use = 0;
+		sim->dongles[index].cooldown = 0;
+		sim->dongles[index].queue_mutex_ready = 0;
+		sim->dongles[index].mutex_ready = 0;
+		if (pthread_mutex_init(&sim->dongles[index].mutex, NULL) != 0)
 			return (1);
-		}
-		i++;
+		sim->dongles[index].queue = heap_init(2, sim->config.scheduler);
+		if (!sim->dongles[index].queue)
+			return (1);
+		if (pthread_mutex_init(&sim->dongles[index].queue_mutex, NULL) != 0)
+			return (1);
+		sim->dongles[index].mutex_ready = 1;
+		sim->dongles[index].queue_mutex_ready = 1;
+		index++;
 	}
 	return (0);
 }
 
-int	init_table(t_table *table, int argc, char **argv)
+static int	init_coders(t_runtime *sim)
 {
-	memset(table, 0, sizeof(*table));
-	if (parse_args(table, argc, argv) != 0)
+	int	index;
+	int	next_index;
+
+	index = 0;
+	while (index < sim->config.num_coders)
+	{
+		sim->coders[index].state_mutex_ready = 0;
+		next_index = (index + 1) % sim->config.num_coders;
+		sim->coders[index].id = index + 1;
+		sim->coders[index].completed_compiles = 0;
+		sim->coders[index].right_dongle = &sim->dongles[index];
+		sim->coders[index].left_dongle = &sim->dongles[next_index];
+		sim->coders[index].request_timestamp = 0;
+		sim->coders[index].sim = sim;
+		if (pthread_mutex_init(&sim->coders[index].state_mutex, NULL) != 0)
+			return (1);
+		sim->coders[index].state_mutex_ready = 1;
+		index++;
+	}
+	return (0);
+}
+
+int	init_runtime(t_runtime *sim)
+{
+	if (init_sync(sim) != 0 || init_alloc(sim) != 0
+		|| init_dongles(sim) != 0
+		|| init_coders(sim) != 0)
+	{
+		cleanup_dongles(sim, sim->config.num_coders);
+		sim->dongles = NULL;
+		sim->coders = NULL;
 		return (1);
-	if (init_mutexes(table) != 0)
-		return (1);
-	table->start_time_ms = get_timestamp_ms();
-	table->simulation_end = false;
-	table->start_released = false;
-	table->next_sequence = 0;
-	table->round = 0;
-	table->completed_in_round = 0;
-	if (init_coders(table) != 0)
-		return (1);
-	if (init_dongles(table) != 0)
-		return (1);
-	if (init_request_queue(&table->request_heap, table->coder_count * 4) != 0)
-		return (1);
-	assign_dongles(table);
+	}
 	return (0);
 }
