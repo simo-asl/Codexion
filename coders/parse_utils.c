@@ -6,7 +6,7 @@
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/07 11:33:09 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/06/11 09:14:48 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/06/15 13:29:32 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,28 +43,15 @@ int	parse_positive_int(const char *str, int *value)
 	return (0);
 }
 
-int	parse_positive_long(const char *str, long *value)
+int	parse_non_negative_int(const char *str, int *value)
 {
 	long long	result;
 
 	if (!is_number(str))
 		return (1);
 	result = ft_atol(str);
-	if (result <= 0)
+	if (result < 0 || result > INT_MAX)
 		return (1);
-	*value = (long)result;
-	return (0);
-}
-
-int	parse_non_negative_long(const char *str, long *value)
-{
-	long long	result;
-
-	if (!is_number(str))
-		return (1);
-	result = ft_atol(str);
-	if (result < 0)
-		return (1);
-	*value = (long)result;
+	*value = (int)result;
 	return (0);
 }

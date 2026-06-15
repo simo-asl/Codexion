@@ -6,7 +6,7 @@
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/14 09:34:47 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/06/11 09:13:58 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/06/15 13:35:11 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,25 +32,25 @@ typedef struct s_parse_input
 {
 	t_scheduler_type	scheduler;
 	int					coder_count;
-	long				time_to_burnout;
-	long				time_to_compile;
-	long				time_to_debug;
-	long				time_to_refactor;
+	int					time_to_burnout;
+	int					time_to_compile;
+	int					time_to_debug;
+	int					time_to_refactor;
 	int					required_compiles;
-	long				dongle_cooldown;
+	int					dongle_cooldown;
 
 }	t_parse_input;
 
 typedef struct s_settings
 {
 	t_scheduler_type	scheduler;
-	long long			num_coders;
-	long long			time_to_burnout;
-	long long			time_to_compile;
-	long long			time_to_debug;
-	long long			time_to_refactor;
-	long long			compiles_required;
-	long long			dongle_cooldown;
+	int					num_coders;
+	int					time_to_burnout;
+	int					time_to_compile;
+	int					time_to_debug;
+	int					time_to_refactor;
+	int					compiles_required;
+	int					dongle_cooldown;
 }	t_settings;
 
 typedef struct s_dongle
