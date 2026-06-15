@@ -6,7 +6,7 @@
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/07 11:33:09 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/06/15 13:29:32 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/06/15 16:27:18 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,8 @@ bool	is_number(const char *str)
 	if (!str || !str[0])
 		return (false);
 	i = 0;
+	while (str[i] == ' ')
+		i++;
 	if (str[i] == '+')
 		i++;
 	while (str[i])

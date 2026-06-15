@@ -6,7 +6,7 @@
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/14 00:08:11 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/06/11 10:33:25 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/06/15 16:27:28 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,8 @@ long long	ft_atol(const char *str)
 	i = 0;
 	res = 0;
 	sign = 1;
+	while (str[i] == ' ')
+		i++;
 	if (str[i] == '-' || str[i] == '+')
 	{
 		if (str[i] == '-')
