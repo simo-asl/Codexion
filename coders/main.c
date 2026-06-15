@@ -6,7 +6,7 @@
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/14 09:02:33 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/06/11 09:14:51 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/06/15 14:50:27 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,13 +14,13 @@
 
 static bool	convert_table_to_config(t_runtime *sim, t_parse_input *input)
 {
-	sim->config.num_coders = (long long)input->coder_count;
-	sim->config.time_to_burnout = (long long)input->time_to_burnout;
-	sim->config.time_to_compile = (long long)input->time_to_compile;
-	sim->config.time_to_debug = (long long)input->time_to_debug;
-	sim->config.time_to_refactor = (long long)input->time_to_refactor;
-	sim->config.compiles_required = (long long)input->required_compiles;
-	sim->config.dongle_cooldown = (long long)input->dongle_cooldown;
+	sim->config.num_coders = input->coder_count;
+	sim->config.time_to_burnout = input->time_to_burnout;
+	sim->config.time_to_compile = input->time_to_compile;
+	sim->config.time_to_debug = input->time_to_debug;
+	sim->config.time_to_refactor = input->time_to_refactor;
+	sim->config.compiles_required = input->required_compiles;
+	sim->config.dongle_cooldown = input->dongle_cooldown;
 	sim->config.scheduler = input->scheduler;
 	return (true);
 }
