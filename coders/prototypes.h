@@ -6,7 +6,7 @@
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/14 09:34:38 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/06/11 09:14:36 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/06/15 13:30:32 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,8 +20,7 @@ int				parse_scheduler(const char *str, t_scheduler_type *scheduler);
 bool			is_number(const char *str);
 long long		ft_atol(const char *str);
 int				parse_positive_int(const char *str, int *value);
-int				parse_positive_long(const char *str, long *value);
-int				parse_non_negative_long(const char *str, long *value);
+int				parse_non_negative_int(const char *str, int *value);
 
 int				init_runtime(t_runtime *sim);
 
