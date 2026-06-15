@@ -6,7 +6,7 @@
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/14 07:58:11 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/06/11 09:15:11 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/06/15 14:15:13 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,6 +50,7 @@ static int	try_take(t_coder *coder, t_dongle *first, t_dongle *second)
 	second->in_use = 1;
 	cleanup_heaps_locked(coder);
 	unlock_dongles(first, second, 1);
+	log_event(coder, "has taken a dongle");
 	log_event(coder, "has taken a dongle");
 	return (0);
 }
