@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   runner.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mel-asla <mel-asla <marvin@42.fr>>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/14 11:08:01 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/06/11 09:14:04 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/06/19 13:29:07 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,8 +68,6 @@ int	join_coder_threads(t_runtime *sim, int end)
 		if (pthread_join(sim->coders[i].thread, NULL) != 0)
 		{
 			request_stop(sim);
-			while (++i < end)
-				pthread_join(sim->coders[i].thread, NULL);
 			return (1);
 		}
 		i++;
