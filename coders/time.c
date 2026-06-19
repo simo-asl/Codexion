@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   time.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mel-asla <mel-asla <marvin@42.fr>>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/14 09:55:18 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/06/11 09:13:51 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/06/19 13:35:44 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,6 @@ void	smart_sleep(long long time_to_sleep, t_runtime *sim)
 	{
 		if (need_to_stop(sim))
 			break ;
-		usleep(50);
+		usleep(300);
 	}
 }
