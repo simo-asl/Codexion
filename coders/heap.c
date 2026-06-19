@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   heap.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mel-asla <mel-asla <marvin@42.fr>>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/14 11:05:39 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/06/11 09:15:04 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/06/19 13:40:55 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@ static int	is_higher_priority(t_queue *queue, t_coder *a, t_coder *b)
 		if (a->burnout_deadline == b->burnout_deadline)
 		{
 			if (a->completed_compiles == b->completed_compiles)
-				return (a->request_timestamp < b->request_timestamp);
+				return (a->id < b->id);
 			return (a->completed_compiles < b->completed_compiles);
 		}
 		return (a->burnout_deadline < b->burnout_deadline);
