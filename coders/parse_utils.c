@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   parse_utils.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mel-asla <mel-asla <marvin@42.fr>>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/07 11:33:09 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/06/15 16:27:18 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/06/19 13:44:16 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,10 +19,6 @@ bool	is_number(const char *str)
 	if (!str || !str[0])
 		return (false);
 	i = 0;
-	while (str[i] == ' ')
-		i++;
-	if (str[i] == '+')
-		i++;
 	while (str[i])
 	{
 		if (str[i] < '0' || str[i] > '9')
