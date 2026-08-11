@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   cleanup.c                                          :+:      :+:    :+:   */
+/*   log.c                                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -12,33 +12,15 @@
 
 #include "codexion.h"
 
-static void	cleanup_dongles(t_sim *sim)
+void	print_coder_state(t_coder *coder, const char *text)
 {
-	int	i;
+	long long	stamp;
 
-	if (!sim->dongles)
-		return ;
-	i = 0;
-	while (i < sim->cfg.number)
-	{
-		free(sim->dongles[i].queue.item);
-		if (sim->dongles[i].cond_ready)
-			pthread_cond_destroy(&sim->dongles[i].changed);
-		if (sim->dongles[i].mutex_ready)
-			pthread_mutex_destroy(&sim->dongles[i].mutex);
-		i++;
-	}
-	free(sim->dongles);
-}
-
-void	destroy_simulation(t_sim *sim)
-{
-	cleanup_dongles(sim);
-	free(sim->coders);
-	if (sim->cond_ready)
-		pthread_cond_destroy(&sim->changed);
-	if (sim->log_ready)
-		pthread_mutex_destroy(&sim->log);
-	if (sim->state_ready)
-		pthread_mutex_destroy(&sim->state);
+	pthread_mutex_lock(&coder->sim->log);
+	pthread_mutex_lock(&coder->sim->state);
+	stamp = current_time_ms() - coder->sim->start;
+	if (!coder->sim->stop)
+		printf("%lld %d %s\n", stamp, coder->id, text);
+	pthread_mutex_unlock(&coder->sim->state);
+	pthread_mutex_unlock(&coder->sim->log);
 }

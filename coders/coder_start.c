@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   cleanup.c                                          :+:      :+:    :+:   */
+/*   coder_start.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -12,33 +12,19 @@
 
 #include "codexion.h"
 
-static void	cleanup_dongles(t_sim *sim)
+void	wait_for_start(t_coder *coder)
 {
-	int	i;
-
-	if (!sim->dongles)
-		return ;
-	i = 0;
-	while (i < sim->cfg.number)
-	{
-		free(sim->dongles[i].queue.item);
-		if (sim->dongles[i].cond_ready)
-			pthread_cond_destroy(&sim->dongles[i].changed);
-		if (sim->dongles[i].mutex_ready)
-			pthread_mutex_destroy(&sim->dongles[i].mutex);
-		i++;
-	}
-	free(sim->dongles);
+	pthread_mutex_lock(&coder->sim->state);
+	while (!coder->sim->start && !coder->sim->stop)
+		pthread_cond_wait(&coder->sim->changed, &coder->sim->state);
+	pthread_mutex_unlock(&coder->sim->state);
 }
 
-void	destroy_simulation(t_sim *sim)
+void	startup_delay(t_coder *coder)
 {
-	cleanup_dongles(sim);
-	free(sim->coders);
-	if (sim->cond_ready)
-		pthread_cond_destroy(&sim->changed);
-	if (sim->log_ready)
-		pthread_mutex_destroy(&sim->log);
-	if (sim->state_ready)
-		pthread_mutex_destroy(&sim->state);
+	long long	spread;
+
+	spread = (coder->sim->cfg.number + 1) / 8;
+	if (coder->id % 2 == 0)
+		interruptible_sleep(coder->sim, spread);
 }

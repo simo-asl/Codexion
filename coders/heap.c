@@ -3,107 +3,64 @@
 /*                                                        :::      ::::::::   */
 /*   heap.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mel-asla <mel-asla <marvin@42.fr>>         +#+  +:+       +#+        */
+/*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/14 11:05:39 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/06/19 13:40:55 by mel-asla         ###   ########.fr       */
+/*   Created: 2026/08/11 00:00:00 by mel-asla          #+#    #+#             */
+/*   Updated: 2026/08/11 00:00:00 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-static int	is_higher_priority(t_queue *queue, t_coder *a, t_coder *b)
+int	has_higher_priority(t_coder *a, t_coder *b, int edf)
 {
-	if (queue->scheduler == SCH_FIFO)
-	{
-		if (a->request_timestamp == b->request_timestamp)
-			return (a->id < b->id);
-		return (a->request_timestamp < b->request_timestamp);
-	}
-	else
-	{
-		if (a->burnout_deadline == b->burnout_deadline)
-		{
-			if (a->completed_compiles == b->completed_compiles)
-				return (a->id < b->id);
-			return (a->completed_compiles < b->completed_compiles);
-		}
-		return (a->burnout_deadline < b->burnout_deadline);
-	}
+	if (edf && a->deadline != b->deadline)
+		return (a->deadline < b->deadline);
+	if (edf && a->compiled != b->compiled)
+		return (a->compiled < b->compiled);
+	if (a->ticket != b->ticket)
+		return (a->ticket < b->ticket);
+	return (a->id < b->id);
 }
 
-void	bubble_up(t_queue *queue, int idx)
+static void	swap(t_coder **a, t_coder **b)
 {
-	int		parent;
 	t_coder	*tmp;
 
-	while (idx > 0)
+	tmp = *a;
+	*a = *b;
+	*b = tmp;
+}
+
+void	heap_up(t_heap *heap, int i, int edf)
+{
+	int	parent;
+
+	while (i > 0)
 	{
-		parent = (idx - 1) / 2;
-		if (!is_higher_priority(queue, queue->items[idx], queue->items[parent]))
+		parent = (i - 1) / 2;
+		if (!has_higher_priority(heap->item[i], heap->item[parent], edf))
 			break ;
-		tmp = queue->items[idx];
-		queue->items[idx] = queue->items[parent];
-		queue->items[parent] = tmp;
-		idx = parent;
+		swap(&heap->item[i], &heap->item[parent]);
+		i = parent;
 	}
 }
 
-void	bubble_down(t_queue *queue, int idx, int size)
+void	heap_down(t_heap *heap, int i, int edf)
 {
-	int		left;
-	int		right;
-	int		best;
-	t_coder	*tmp;
+	int	left;
+	int	best;
 
-	while (1)
+	while (i * 2 + 1 < heap->size)
 	{
-		left = 2 * idx + 1;
-		right = 2 * idx + 2;
-		best = idx;
-		if (left < size && is_higher_priority(queue,
-				queue->items[left], queue->items[best]))
-			best = left;
-		if (right < size && is_higher_priority(queue,
-				queue->items[right], queue->items[best]))
-			best = right;
-		if (best == idx)
+		left = i * 2 + 1;
+		best = left;
+		if (left + 1 < heap->size
+			&& has_higher_priority(heap->item[left + 1], heap->item[left], edf))
+			best = left + 1;
+		if (!has_higher_priority(heap->item[best], heap->item[i], edf))
 			break ;
-		tmp = queue->items[idx];
-		queue->items[idx] = queue->items[best];
-		queue->items[best] = tmp;
-		idx = best;
+		swap(&heap->item[i], &heap->item[best]);
+		i = best;
 	}
-}
-
-void	heap_remove_at(t_queue *queue, int index)
-{
-	if (!queue || index < 0 || index >= queue->size)
-		return ;
-	queue->size--;
-	if (index == queue->size)
-		return ;
-	queue->items[index] = queue->items[queue->size];
-	bubble_down(queue, index, queue->size);
-}
-
-t_queue	*heap_init(int max_size, t_scheduler_type scheduler)
-{
-	t_queue	*queue;
-
-	if (max_size <= 0)
-		return (NULL);
-	queue = malloc(sizeof(t_queue));
-	if (!queue)
-		return (NULL);
-	queue->items = malloc(sizeof(t_coder *) * max_size);
-	if (!queue->items)
-	{
-		free(queue);
-		return (NULL);
-	}
-	queue->max_size = max_size;
-	queue->size = 0;
-	queue->scheduler = scheduler;
-	return (queue);
 }

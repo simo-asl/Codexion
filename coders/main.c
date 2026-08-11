@@ -5,79 +5,71 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/14 09:02:33 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/06/15 14:50:27 by mel-asla         ###   ########.fr       */
+/*   Created: 2026/08/11 00:00:00 by mel-asla          #+#    #+#             */
+/*   Updated: 2026/08/11 00:00:00 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-static bool	convert_table_to_config(t_runtime *sim, t_parse_input *input)
+static int	number(const char *text, int positive, int *value)
 {
-	sim->config.num_coders = input->coder_count;
-	sim->config.time_to_burnout = input->time_to_burnout;
-	sim->config.time_to_compile = input->time_to_compile;
-	sim->config.time_to_debug = input->time_to_debug;
-	sim->config.time_to_refactor = input->time_to_refactor;
-	sim->config.compiles_required = input->required_compiles;
-	sim->config.dongle_cooldown = input->dongle_cooldown;
-	sim->config.scheduler = input->scheduler;
-	return (true);
+	long long	n;
+	int			i;
+
+	if (!text || !text[0])
+		return (1);
+	n = 0;
+	i = 0;
+	while (text[i])
+	{
+		if (text[i] < '0' || text[i] > '9')
+			return (1);
+		if (n > (INT_MAX - (text[i] - '0')) / 10)
+			return (1);
+		n = n * 10 + text[i++] - '0';
+	}
+	if ((positive && n == 0) || n > INT_MAX)
+		return (1);
+	*value = (int)n;
+	return (0);
 }
 
-static bool	prepare_simulation(t_runtime *sim, int argc, char **argv)
+int	parse_arguments(t_config *c, int ac, char **av)
 {
-	t_parse_input	input;
-
-	memset(&input, 0, sizeof(t_parse_input));
-	if (parse_args(&input, argc, argv) != 0)
-	{
-		fprintf(stderr, "Error: Invalid arguments.\n");
-		return (false);
-	}
-	if (!convert_table_to_config(sim, &input))
-	{
-		fprintf(stderr, "Error: Failed to start simulation.\n");
-		return (false);
-	}
-	if (init_runtime(sim) != 0)
-	{
-		fprintf(stderr, "Error: Failed to initialize runtime.\n");
-		return (false);
-	}
-	return (true);
+	if (ac != 9 || number(av[1], 1, &c->number)
+		|| number(av[2], 0, &c->burnout)
+		|| number(av[3], 0, &c->compile)
+		|| number(av[4], 0, &c->debug)
+		|| number(av[5], 0, &c->refactor)
+		|| number(av[6], 1, &c->required)
+		|| number(av[7], 0, &c->cooldown))
+		return (1);
+	if (!strcmp(av[8], "fifo"))
+		c->edf = 0;
+	else if (!strcmp(av[8], "edf"))
+		c->edf = 1;
+	else
+		return (1);
+	return (0);
 }
 
-static bool	run_simulation(int argc, char **argv)
+int	main(int ac, char **av)
 {
-	t_runtime	*sim;
+	t_sim	sim;
 
-	sim = malloc(sizeof(t_runtime));
-	if (!sim)
-		return (false);
-	memset(sim, 0, sizeof(t_runtime));
-	if (!prepare_simulation(sim, argc, argv))
+	memset(&sim, 0, sizeof(sim));
+	if (parse_arguments(&sim.cfg, ac, av))
 	{
-		cleanup_all(sim);
-		return (false);
-	}
-	if (run_coders(sim) != 0)
-	{
-		cleanup_all(sim);
-		return (false);
-	}
-	cleanup_all(sim);
-	return (true);
-}
-
-int	main(int argc, char **argv)
-{
-	if (argc != 9)
-	{
-		fprintf(stderr, USAGE_MSG, argv[0]);
+		write(2, "Error: invalid arguments\n", 25);
 		return (1);
 	}
-	if (run_simulation(argc, argv))
-		return (0);
-	return (1);
+	if (initialize_simulation(&sim) || run_simulation(&sim))
+	{
+		destroy_simulation(&sim);
+		write(2, "Error: simulation failed\n", 25);
+		return (1);
+	}
+	destroy_simulation(&sim);
+	return (0);
 }

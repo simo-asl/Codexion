@@ -1,29 +1,33 @@
+NAME = codexion
 CC = cc
 CFLAGS = -Wall -Wextra -Werror -pthread
-NAME = codexion
-SRCS = coders/cleanup.c coders/coder_routine.c coders/monitor.c coders/main.c coders/dongles.c \
-	coders/dongles_helper.c coders/heap.c coders/heap_utils.c coders/init.c \
-	coders/runner.c coders/logs_state.c coders/time.c coders/ft_atol.c coders/parse.c coders/parse_utils.c
-	
-OBJS = $(SRCS:.c=.o)
-HEADERS = coders/codexion.h coders/structs.h coders/prototypes.h
+SRC = coders/main.c coders/init.c coders/heap.c coders/heap_ops.c \
+	 coders/dongles.c coders/dongle_pair.c coders/dongle_wait.c coders/coder.c \
+	 coders/coder_start.c coders/log.c \
+	 coders/monitor.c coders/simulation.c coders/time.c coders/cleanup.c
+OBJ = $(SRC:.c=.o)
+HDR = coders/codexion.h
 
 all: $(NAME)
 
-$(NAME): $(OBJS)
-	$(CC) $(CFLAGS) -o $(NAME) $(OBJS)
+$(NAME): $(OBJ)
+	$(CC) $(CFLAGS) $(OBJ) -o $(NAME)
 
-%.o: %.c $(HEADERS)
+%.o: %.c $(HDR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJS)
+	rm -f $(OBJ)
 
 fclean: clean
 	rm -f $(NAME)
 
-clean_all: fclean
-
 re: fclean all
 
-.PHONY: all clean fclean clean_all re
+test: $(NAME)
+	$(CC) $(CFLAGS) tests/test_scheduler.c coders/heap.c \
+		coders/heap_ops.c -o /tmp/codexion_scheduler_test
+	/tmp/codexion_scheduler_test
+	sh tests/test_codexion.sh
+
+.PHONY: all clean fclean re test

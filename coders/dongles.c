@@ -5,90 +5,101 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/14 07:58:11 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/06/15 14:15:13 by mel-asla         ###   ########.fr       */
+/*   Created: 2026/08/11 00:00:00 by mel-asla          #+#    #+#             */
+/*   Updated: 2026/08/11 00:00:00 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-static int	insert_in_heaps(t_coder *coder, t_dongle *first, t_dongle *second)
+static int	queue_request(t_coder *coder)
 {
-	lock_dongles(first, second, 1);
-	if (heap_insert(coder->left_dongle->queue, coder) != 0)
+	lock_dongle_pair(coder);
+	pthread_mutex_lock(&coder->sim->state);
+	coder->ticket = coder->sim->next_ticket++;
+	pthread_mutex_unlock(&coder->sim->state);
+	if (heap_push(&coder->left->queue, coder, coder->sim->cfg.edf)
+		|| heap_push(&coder->right->queue, coder, coder->sim->cfg.edf))
 	{
-		unlock_dongles(first, second, 1);
+		heap_remove(&coder->left->queue, coder, coder->sim->cfg.edf);
+		unlock_dongle_pair(coder);
 		return (1);
 	}
-	if (heap_insert(coder->right_dongle->queue, coder) != 0)
-	{
-		heap_remove_at(coder->left_dongle->queue,
-			heap_find_index(coder->left_dongle->queue, coder));
-		unlock_dongles(first, second, 1);
-		return (1);
-	}
-	unlock_dongles(first, second, 1);
+	notify_dongle_waiters(coder->left);
+	notify_dongle_waiters(coder->right);
+	unlock_dongle_pair(coder);
 	return (0);
 }
 
-static int	try_take(t_coder *coder, t_dongle *first, t_dongle *second)
+static int	can_take(t_coder *coder, long long now)
+{
+	return (coder->left->queue.item[0] == coder
+		&& coder->right->queue.item[0] == coder && !coder->left->busy
+		&& !coder->right->busy && now >= coder->left->ready_at
+		&& now >= coder->right->ready_at);
+}
+
+static int	claim(t_coder *coder, long long now)
+{
+	int	claimed;
+
+	claimed = 0;
+	pthread_mutex_lock(&coder->sim->state);
+	if (!coder->sim->stop && now < coder->deadline)
+	{
+		coder->compile_start = now;
+		coder->deadline = now + coder->sim->cfg.burnout;
+		coder->left->busy = 1;
+		coder->right->busy = 1;
+		claimed = 1;
+	}
+	pthread_mutex_unlock(&coder->sim->state);
+	return (claimed);
+}
+
+static int	try_take(t_coder *coder, t_dongle **blocked,
+	unsigned long *version, long long *until)
 {
 	long long	now;
+	int			claimed;
 
-	lock_dongles(first, second, 1);
-	now = get_time_in_ms();
-	if (!is_top_of_heap(coder->left_dongle, coder)
-		|| !is_top_of_heap(coder->right_dongle, coder)
-		|| first->in_use || second->in_use
-		|| now < first->cooldown || now < second->cooldown)
+	claimed = 0;
+	lock_dongle_pair(coder);
+	now = current_time_ms();
+	if (can_take(coder, now))
+		claimed = claim(coder, now);
+	if (claimed)
 	{
-		unlock_dongles(first, second, 1);
-		usleep(50);
-		return (1);
+		heap_remove(&coder->left->queue, coder, coder->sim->cfg.edf);
+		heap_remove(&coder->right->queue, coder, coder->sim->cfg.edf);
+		notify_dongle_waiters(coder->left);
+		notify_dongle_waiters(coder->right);
 	}
-	first->in_use = 1;
-	second->in_use = 1;
-	cleanup_heaps_locked(coder);
-	unlock_dongles(first, second, 1);
-	log_event(coder, "has taken a dongle");
-	log_event(coder, "has taken a dongle");
-	return (0);
+	else
+		*blocked = select_blocking_dongle(coder, now, version, until);
+	unlock_dongle_pair(coder);
+	return (claimed);
 }
 
-int	acquire_dongles(t_coder *coder)
+int	request_dongles(t_coder *coder)
 {
-	t_dongle	*first_d;
-	t_dongle	*second_d;
+	t_dongle		*blocked;
+	unsigned long	version;
+	long long		until;
 
-	lock_order(coder, &first_d, &second_d);
-	coder->request_timestamp = get_time_in_ms();
-	if (insert_in_heaps(coder, first_d, second_d) != 0)
+	if (queue_request(coder))
 		return (1);
-	while (!need_to_stop(coder->sim))
+	while (!simulation_stopped(coder->sim))
 	{
-		if (try_take(coder, first_d, second_d) == 0)
+		if (try_take(coder, &blocked, &version, &until))
+		{
+			print_coder_state(coder, "has taken a dongle");
+			print_coder_state(coder, "has taken a dongle");
+			print_coder_state(coder, "is compiling");
 			return (0);
+		}
+		wait_on_dongle(blocked, version, until);
 	}
-	lock_dongles(first_d, second_d, 1);
-	cleanup_heaps_locked(coder);
-	unlock_dongles(first_d, second_d, 1);
+	leave_queues(coder);
 	return (1);
-}
-
-void	release_dongles(t_coder *coder)
-{
-	t_dongle		*first;
-	t_dongle		*second;
-	long long		now;
-	long long		cooldown;
-
-	cooldown = coder->sim->config.dongle_cooldown;
-	lock_order(coder, &first, &second);
-	lock_dongles(first, second, 0);
-	now = get_time_in_ms();
-	first->in_use = 0;
-	first->cooldown = now + cooldown;
-	second->in_use = 0;
-	second->cooldown = now + cooldown;
-	unlock_dongles(first, second, 0);
 }

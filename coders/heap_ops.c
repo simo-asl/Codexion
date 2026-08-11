@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   cleanup.c                                          :+:      :+:    :+:   */
+/*   heap_ops.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -12,33 +12,32 @@
 
 #include "codexion.h"
 
-static void	cleanup_dongles(t_sim *sim)
+int	heap_push(t_heap *heap, t_coder *coder, int edf)
+{
+	if (heap->size == heap->capacity)
+		return (1);
+	heap->item[heap->size] = coder;
+	heap_up(heap, heap->size, edf);
+	heap->size++;
+	return (0);
+}
+
+void	heap_remove(t_heap *heap, t_coder *coder, int edf)
 {
 	int	i;
 
-	if (!sim->dongles)
-		return ;
 	i = 0;
-	while (i < sim->cfg.number)
-	{
-		free(sim->dongles[i].queue.item);
-		if (sim->dongles[i].cond_ready)
-			pthread_cond_destroy(&sim->dongles[i].changed);
-		if (sim->dongles[i].mutex_ready)
-			pthread_mutex_destroy(&sim->dongles[i].mutex);
+	while (i < heap->size && heap->item[i] != coder)
 		i++;
-	}
-	free(sim->dongles);
-}
-
-void	destroy_simulation(t_sim *sim)
-{
-	cleanup_dongles(sim);
-	free(sim->coders);
-	if (sim->cond_ready)
-		pthread_cond_destroy(&sim->changed);
-	if (sim->log_ready)
-		pthread_mutex_destroy(&sim->log);
-	if (sim->state_ready)
-		pthread_mutex_destroy(&sim->state);
+	if (i == heap->size)
+		return ;
+	heap->size--;
+	if (i == heap->size)
+		return ;
+	heap->item[i] = heap->item[heap->size];
+	if (i > 0 && has_higher_priority(heap->item[i],
+			heap->item[(i - 1) / 2], edf))
+		heap_up(heap, i, edf);
+	else
+		heap_down(heap, i, edf);
 }
