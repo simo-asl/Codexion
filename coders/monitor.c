@@ -12,7 +12,7 @@
 
 #include "codexion.h"
 
-static int	inspect(t_sim *sim, int *burned, long long *next)
+static int	inspect_coders(t_sim *sim, int *burned)
 {
 	int			i;
 	int			done;
@@ -22,7 +22,6 @@ static int	inspect(t_sim *sim, int *burned, long long *next)
 	done = 0;
 	now = current_time_ms();
 	*burned = -1;
-	*next = LLONG_MAX;
 	while (i < sim->cfg.number)
 	{
 		if (sim->coders[i].compiled >= sim->cfg.required)
@@ -32,8 +31,6 @@ static int	inspect(t_sim *sim, int *burned, long long *next)
 			*burned = i;
 			break ;
 		}
-		else if (sim->coders[i].deadline < *next)
-			*next = sim->coders[i].deadline;
 		i++;
 	}
 	return (done == sim->cfg.number);
@@ -56,7 +53,6 @@ static void	end_monitor(t_sim *sim, int burned)
 void	*monitor_thread(void *arg)
 {
 	t_sim		*sim;
-	long long	next;
 	int			burned;
 
 	sim = (t_sim *)arg;
@@ -64,10 +60,10 @@ void	*monitor_thread(void *arg)
 	pthread_mutex_lock(&sim->state);
 	while (!sim->stop)
 	{
-		if (inspect(sim, &burned, &next) || burned >= 0)
+		if (inspect_coders(sim, &burned) || burned >= 0)
 		{
 			sim->stop = 1;
-			pthread_cond_broadcast(&sim->changed);
+			pthread_cond_broadcast(&sim->state_changed);
 			break ;
 		}
 		pthread_mutex_unlock(&sim->state);

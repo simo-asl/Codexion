@@ -20,9 +20,9 @@ static int	init_shared(t_sim *sim)
 	if (pthread_mutex_init(&sim->log, NULL))
 		return (1);
 	sim->log_ready = 1;
-	if (pthread_cond_init(&sim->changed, NULL))
+	if (pthread_cond_init(&sim->state_changed, NULL))
 		return (1);
-	sim->cond_ready = 1;
+	sim->state_cond_ready = 1;
 	return (0);
 }
 
@@ -38,14 +38,15 @@ static int	init_dongles(t_sim *sim)
 	while (i < sim->cfg.number)
 	{
 		sim->dongles[i].queue.capacity = 2;
-		sim->dongles[i].queue.item = malloc(sizeof(t_coder *) * 2);
+		sim->dongles[i].queue.item = malloc(sizeof(t_coder *)
+				* sim->dongles[i].queue.capacity);
 		if (!sim->dongles[i].queue.item
 			|| pthread_mutex_init(&sim->dongles[i].mutex, NULL))
 			return (1);
 		sim->dongles[i].mutex_ready = 1;
-		if (pthread_cond_init(&sim->dongles[i].changed, NULL))
+		if (pthread_cond_init(&sim->dongles[i].resource_changed, NULL))
 			return (1);
-		sim->dongles[i].cond_ready = 1;
+		sim->dongles[i].change_cond_ready = 1;
 		i++;
 	}
 	return (0);

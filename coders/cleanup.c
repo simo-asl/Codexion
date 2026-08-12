@@ -22,8 +22,8 @@ static void	cleanup_dongles(t_sim *sim)
 	while (i < sim->cfg.number)
 	{
 		free(sim->dongles[i].queue.item);
-		if (sim->dongles[i].cond_ready)
-			pthread_cond_destroy(&sim->dongles[i].changed);
+		if (sim->dongles[i].change_cond_ready)
+			pthread_cond_destroy(&sim->dongles[i].resource_changed);
 		if (sim->dongles[i].mutex_ready)
 			pthread_mutex_destroy(&sim->dongles[i].mutex);
 		i++;
@@ -35,8 +35,8 @@ void	destroy_simulation(t_sim *sim)
 {
 	cleanup_dongles(sim);
 	free(sim->coders);
-	if (sim->cond_ready)
-		pthread_cond_destroy(&sim->changed);
+	if (sim->state_cond_ready)
+		pthread_cond_destroy(&sim->state_changed);
 	if (sim->log_ready)
 		pthread_mutex_destroy(&sim->log);
 	if (sim->state_ready)

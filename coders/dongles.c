@@ -58,7 +58,7 @@ static int	claim(t_coder *coder, long long now)
 }
 
 static int	try_take(t_coder *coder, t_dongle **blocked,
-	unsigned long *version, long long *until)
+	unsigned long *observed_version, long long *wake_at)
 {
 	long long	now;
 	int			claimed;
@@ -76,7 +76,8 @@ static int	try_take(t_coder *coder, t_dongle **blocked,
 		notify_dongle_waiters(coder->right);
 	}
 	else
-		*blocked = select_blocking_dongle(coder, now, version, until);
+		*blocked = select_blocking_dongle(coder, now,
+				observed_version, wake_at);
 	unlock_dongle_pair(coder);
 	return (claimed);
 }
@@ -84,21 +85,21 @@ static int	try_take(t_coder *coder, t_dongle **blocked,
 int	request_dongles(t_coder *coder)
 {
 	t_dongle		*blocked;
-	unsigned long	version;
-	long long		until;
+	unsigned long	observed_version;
+	long long		wake_at;
 
 	if (queue_request(coder))
 		return (1);
 	while (!simulation_stopped(coder->sim))
 	{
-		if (try_take(coder, &blocked, &version, &until))
+		if (try_take(coder, &blocked, &observed_version, &wake_at))
 		{
 			print_coder_state(coder, "has taken a dongle");
 			print_coder_state(coder, "has taken a dongle");
 			print_coder_state(coder, "is compiling");
 			return (0);
 		}
-		wait_on_dongle(blocked, version, until);
+		wait_on_dongle(blocked, observed_version, wake_at);
 	}
 	leave_queues(coder);
 	return (1);

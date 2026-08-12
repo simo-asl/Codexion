@@ -35,13 +35,13 @@ typedef struct s_heap
 typedef struct s_dongle
 {
 	pthread_mutex_t	mutex;
-	pthread_cond_t	changed;
+	pthread_cond_t	resource_changed;
 	t_heap			queue;
 	long long		ready_at;
-	unsigned long	version;
+	unsigned long	change_version;
 	int				busy;
 	int				mutex_ready;
-	int				cond_ready;
+	int				change_cond_ready;
 }	t_dongle;
 
 typedef struct s_config
@@ -77,13 +77,13 @@ struct s_sim
 	pthread_t		monitor;
 	pthread_mutex_t	state;
 	pthread_mutex_t	log;
-	pthread_cond_t	changed;
+	pthread_cond_t	state_changed;
 	long long		start;
 	long long		next_ticket;
 	int				stop;
 	int				state_ready;
 	int				log_ready;
-	int				cond_ready;
+	int				state_cond_ready;
 };
 
 int			parse_arguments(t_config *cfg, int ac, char **av);
@@ -103,9 +103,9 @@ void		unlock_dongle_pair(t_coder *coder);
 void		leave_queues(t_coder *coder);
 void		notify_dongle_waiters(t_dongle *dongle);
 t_dongle	*select_blocking_dongle(t_coder *coder, long long now,
-				unsigned long *version, long long *until);
-void		wait_on_dongle(t_dongle *dongle, unsigned long version,
-				long long until);
+				unsigned long *observed_version, long long *wake_at);
+void		wait_on_dongle(t_dongle *dongle,
+				unsigned long observed_version, long long wake_at);
 
 int			has_higher_priority(t_coder *a, t_coder *b, int edf);
 int			heap_push(t_heap *heap, t_coder *coder, int edf);

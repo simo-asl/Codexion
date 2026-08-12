@@ -38,7 +38,7 @@ void	timed_wait_until(t_sim *sim, long long wake_at)
 	wake_time.tv_nsec = (wake_at % 1000) * 1000000;
 	pthread_mutex_lock(&sim->state);
 	if (!sim->stop)
-		pthread_cond_timedwait(&sim->changed, &sim->state, &wake_time);
+		pthread_cond_timedwait(&sim->state_changed, &sim->state, &wake_time);
 	pthread_mutex_unlock(&sim->state);
 }
 
@@ -56,6 +56,6 @@ void	stop_simulation(t_sim *sim)
 {
 	pthread_mutex_lock(&sim->state);
 	sim->stop = 1;
-	pthread_cond_broadcast(&sim->changed);
+	pthread_cond_broadcast(&sim->state_changed);
 	pthread_mutex_unlock(&sim->state);
 }

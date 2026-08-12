@@ -14,8 +14,8 @@
 
 void	notify_dongle_waiters(t_dongle *dongle)
 {
-	dongle->version++;
-	pthread_cond_broadcast(&dongle->changed);
+	dongle->change_version++;
+	pthread_cond_broadcast(&dongle->resource_changed);
 }
 
 static t_dongle	*cooldown_dongle(t_coder *coder)
@@ -26,7 +26,7 @@ static t_dongle	*cooldown_dongle(t_coder *coder)
 }
 
 t_dongle	*select_blocking_dongle(t_coder *coder, long long now,
-	unsigned long *version, long long *until)
+	unsigned long *observed_version, long long *wake_at)
 {
 	t_dongle	*blocked;
 
@@ -40,23 +40,24 @@ t_dongle	*select_blocking_dongle(t_coder *coder, long long now,
 		blocked = cooldown_dongle(coder);
 	else if (coder->right->busy)
 		blocked = coder->right;
-	*version = blocked->version;
-	*until = coder->deadline;
+	*observed_version = blocked->change_version;
+	*wake_at = coder->deadline;
 	if (!blocked->busy && blocked->ready_at > now
-		&& blocked->ready_at < *until)
-		*until = blocked->ready_at;
+		&& blocked->ready_at < *wake_at)
+		*wake_at = blocked->ready_at;
 	return (blocked);
 }
 
-void	wait_on_dongle(t_dongle *dongle, unsigned long version,
-	long long until)
+void	wait_on_dongle(t_dongle *dongle, unsigned long observed_version,
+	long long wake_at)
 {
-	struct timespec	limit;
+	struct timespec	wake_time;
 
-	limit.tv_sec = until / 1000;
-	limit.tv_nsec = (until % 1000) * 1000000;
+	wake_time.tv_sec = wake_at / 1000;
+	wake_time.tv_nsec = (wake_at % 1000) * 1000000;
 	pthread_mutex_lock(&dongle->mutex);
-	if (dongle->version == version)
-		pthread_cond_timedwait(&dongle->changed, &dongle->mutex, &limit);
+	if (dongle->change_version == observed_version)
+		pthread_cond_timedwait(&dongle->resource_changed,
+			&dongle->mutex, &wake_time);
 	pthread_mutex_unlock(&dongle->mutex);
 }

@@ -44,14 +44,14 @@ void	leave_queues(t_coder *coder)
 
 void	release_dongles(t_coder *coder)
 {
-	long long	ready;
+	long long	ready_at;
 
 	lock_dongle_pair(coder);
-	ready = current_time_ms() + coder->sim->cfg.cooldown;
+	ready_at = current_time_ms() + coder->sim->cfg.cooldown;
 	coder->left->busy = 0;
 	coder->right->busy = 0;
-	coder->left->ready_at = ready;
-	coder->right->ready_at = ready;
+	coder->left->ready_at = ready_at;
+	coder->right->ready_at = ready_at;
 	notify_dongle_waiters(coder->left);
 	notify_dongle_waiters(coder->right);
 	unlock_dongle_pair(coder);

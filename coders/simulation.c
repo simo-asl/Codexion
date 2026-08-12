@@ -33,7 +33,7 @@ static void	start_sim(t_sim *sim)
 	i = 0;
 	while (i < sim->cfg.number)
 		sim->coders[i++].deadline = sim->start + sim->cfg.burnout;
-	pthread_cond_broadcast(&sim->changed);
+	pthread_cond_broadcast(&sim->state_changed);
 	pthread_mutex_unlock(&sim->state);
 }
 

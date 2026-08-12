@@ -30,7 +30,6 @@ Other Makefile rules:
 make clean
 make fclean
 make re
-make test
 ```
 
 ## Resources
