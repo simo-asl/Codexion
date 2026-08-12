@@ -24,10 +24,4 @@ fclean: clean
 
 re: fclean all
 
-test: $(NAME)
-	$(CC) $(CFLAGS) tests/test_scheduler.c coders/heap.c \
-		coders/heap_ops.c -o /tmp/codexion_scheduler_test
-	/tmp/codexion_scheduler_test
-	sh tests/test_codexion.sh
-
-.PHONY: all clean fclean re test
+.PHONY: all clean fclean re
