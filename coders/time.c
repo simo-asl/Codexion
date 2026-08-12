@@ -21,24 +21,24 @@ long long	current_time_ms(void)
 	return ((long long)tv.tv_sec * 1000 + tv.tv_usec / 1000);
 }
 
-void	interruptible_sleep(t_sim *sim, long long duration)
+void	interruptible_sleep(t_sim *sim, long long duration_ms)
 {
-	long long	end;
+	long long	wake_at;
 
-	end = current_time_ms() + duration;
-	while (!simulation_stopped(sim) && current_time_ms() < end)
-		timed_wait_until(sim, end);
+	wake_at = current_time_ms() + duration_ms;
+	while (!simulation_stopped(sim) && current_time_ms() < wake_at)
+		timed_wait_until(sim, wake_at);
 }
 
-void	timed_wait_until(t_sim *sim, long long when)
+void	timed_wait_until(t_sim *sim, long long wake_at)
 {
-	struct timespec	limit;
+	struct timespec	wake_time;
 
-	limit.tv_sec = when / 1000;
-	limit.tv_nsec = (when % 1000) * 1000000;
+	wake_time.tv_sec = wake_at / 1000;
+	wake_time.tv_nsec = (wake_at % 1000) * 1000000;
 	pthread_mutex_lock(&sim->state);
 	if (!sim->stop)
-		pthread_cond_timedwait(&sim->changed, &sim->state, &limit);
+		pthread_cond_timedwait(&sim->changed, &sim->state, &wake_time);
 	pthread_mutex_unlock(&sim->state);
 }
 

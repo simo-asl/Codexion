@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   codexion.h                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mel-asla <mel-asla <marvin@42.fr>>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/14 09:34:01 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/06/11 09:15:15 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/08/12 01:53:44 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -114,8 +114,8 @@ void		heap_up(t_heap *heap, int i, int edf);
 void		heap_down(t_heap *heap, int i, int edf);
 
 long long	current_time_ms(void);
-void		interruptible_sleep(t_sim *sim, long long duration);
-void		timed_wait_until(t_sim *sim, long long when);
+void		interruptible_sleep(t_sim *sim, long long duration_ms);
+void		timed_wait_until(t_sim *sim, long long wake_at);
 int			simulation_stopped(t_sim *sim);
 void		stop_simulation(t_sim *sim);
 void		print_coder_state(t_coder *coder, const char *text);
