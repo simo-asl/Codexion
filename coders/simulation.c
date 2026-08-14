@@ -5,58 +5,100 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/14 10:29:43 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/08/10 21:10:00 by mel-asla         ###   ########.fr       */
+/*   Created: 2026/04/21 13:55:22 by mel-asla          #+#    #+#             */
+/*   Updated: 2026/08/14 13:37:12 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-static int	create_coders(t_sim *sim, int *created)
+static void	set_start_state(t_sim *sim)
 {
-	while (*created < sim->cfg.number)
+	int			i;
+	long long	start_ms;
+
+	start_ms = current_time_ms();
+	i = 0;
+	while (i < sim->config.coder_count)
 	{
-		if (pthread_create(&sim->coders[*created].thread, NULL,
-				coder_thread, &sim->coders[*created]))
-			return (1);
-		(*created)++;
+		pthread_mutex_lock(&sim->coders[i].state_mutex);
+		sim->coders[i].deadline = start_ms
+			+ sim->config.time_to_burnout;
+		pthread_mutex_unlock(&sim->coders[i].state_mutex);
+		i++;
 	}
-	return (0);
 }
 
-static void	start_sim(t_sim *sim)
+static void	broadcast_start(t_sim *sim)
+{
+	pthread_mutex_lock(&sim->state_mutex);
+	sim->start_time_ms = current_time_ms();
+	pthread_cond_broadcast(&sim->start_condition);
+	pthread_mutex_unlock(&sim->state_mutex);
+}
+
+static int	create_coder_threads(t_sim *sim)
 {
 	int	i;
 
-	pthread_mutex_lock(&sim->state);
-	sim->start = current_time_ms();
 	i = 0;
-	while (i < sim->cfg.number)
-		sim->coders[i++].deadline = sim->start + sim->cfg.burnout;
-	pthread_cond_broadcast(&sim->state_changed);
-	pthread_mutex_unlock(&sim->state);
+	while (i < sim->config.coder_count)
+	{
+		if (pthread_create(&sim->coders[i].thread, NULL,
+				coder_thread, &sim->coders[i]) != 0)
+		{
+			stop_simulation(sim);
+			join_coder_threads(sim, i);
+			return (FAIL);
+		}
+		i++;
+	}
+	return (SUCCESS);
+}
+
+int	join_coder_threads(t_sim *sim, int end)
+{
+	int	i;
+
+	i = 0;
+	if (!end)
+		end = sim->config.coder_count;
+	while (i < end)
+	{
+		if (pthread_join(sim->coders[i].thread, NULL) != 0)
+		{
+			stop_simulation(sim);
+			while (++i < end)
+				pthread_join(sim->coders[i].thread, NULL);
+			return (FAIL);
+		}
+		i++;
+	}
+	return (SUCCESS);
 }
 
 int	run_simulation(t_sim *sim)
 {
-	int	i;
-	int	created;
-	int	monitor_ok;
-
-	created = 0;
-	monitor_ok = 0;
-	if (!create_coders(sim, &created))
+	if (create_coder_threads(sim) != SUCCESS)
 	{
-		start_sim(sim);
-		if (!pthread_create(&sim->monitor, NULL, monitor_thread, sim))
-			monitor_ok = 1;
-	}
-	if (!monitor_ok)
 		stop_simulation(sim);
-	i = 0;
-	while (i < created)
-		pthread_join(sim->coders[i++].thread, NULL);
-	if (monitor_ok)
-		pthread_join(sim->monitor, NULL);
-	return (!monitor_ok);
+		return (FAIL);
+	}
+	set_start_state(sim);
+	if (pthread_create(&sim->monitor_thread, NULL, monitor_thread, sim) != 0)
+	{
+		stop_simulation(sim);
+		join_coder_threads(sim, 0);
+		return (FAIL);
+	}
+	broadcast_start(sim);
+	if (join_coder_threads(sim, 0) != SUCCESS)
+	{
+		pthread_join(sim->monitor_thread, NULL);
+		return (FAIL);
+	}
+	stop_simulation(sim);
+	if (pthread_join(sim->monitor_thread, NULL) != 0)
+		return (FAIL);
+	return (SUCCESS);
 }

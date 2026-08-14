@@ -5,26 +5,43 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/14 09:27:44 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/08/10 19:05:00 by mel-asla         ###   ########.fr       */
+/*   Created: 2026/04/22 17:45:23 by mel-asla          #+#    #+#             */
+/*   Updated: 2026/08/14 13:37:12 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-void	wait_for_start(t_coder *coder)
+static void	run_cycle(t_coder *coder)
 {
-	pthread_mutex_lock(&coder->sim->state);
-	while (!coder->sim->start && !coder->sim->stop)
-		pthread_cond_wait(&coder->sim->state_changed, &coder->sim->state);
-	pthread_mutex_unlock(&coder->sim->state);
+	if (coder->left == coder->right)
+		return ;
+	if (request_dongles(coder) != SUCCESS)
+		return ;
+	compile_code(coder);
+	if (!simulation_stopped(coder->sim))
+		do_other_work(coder);
 }
 
-void	startup_delay(t_coder *coder)
+static void	wait_for_start(t_coder *coder)
 {
-	long long	startup_spread;
+	pthread_mutex_lock(&coder->sim->state_mutex);
+	while (!coder->sim->stop_requested && coder->sim->start_time_ms == 0)
+		pthread_cond_wait(&coder->sim->start_condition,
+			&coder->sim->state_mutex);
+	pthread_mutex_unlock(&coder->sim->state_mutex);
+}
 
-	startup_spread = (coder->sim->cfg.number + 1) / 8;
+void	*coder_thread(void *arg)
+{
+	t_coder		*coder;
+
+	coder = (t_coder *)arg;
+	wait_for_start(coder);
 	if (coder->id % 2 == 0)
-		interruptible_sleep(coder->sim, startup_spread);
+		interruptible_sleep(coder->sim->config.time_to_compile / 4,
+			coder->sim);
+	while (!simulation_stopped(coder->sim))
+		run_cycle(coder);
+	return (NULL);
 }

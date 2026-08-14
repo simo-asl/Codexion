@@ -5,54 +5,68 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/14 08:25:36 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/08/11 19:32:00 by mel-asla         ###   ########.fr       */
+/*   Created: 2026/05/07 10:10:00 by mel-asla          #+#    #+#             */
+/*   Updated: 2026/08/14 13:37:12 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-void	lock_dongle_pair(t_coder *coder)
+int	is_queue_head(t_dongle *dongle, t_coder *coder)
+{
+	if (!dongle || !dongle->queue)
+		return (FAIL);
+	if (heap_is_empty(dongle->queue))
+		return (FAIL);
+	return (dongle->queue->item[0] == coder);
+}
+
+void	order_dongles(t_coder *coder, t_dongle **first, t_dongle **second)
 {
 	if (coder->left < coder->right)
 	{
-		pthread_mutex_lock(&coder->left->mutex);
-		pthread_mutex_lock(&coder->right->mutex);
+		*first = coder->left;
+		*second = coder->right;
 	}
 	else
 	{
-		pthread_mutex_lock(&coder->right->mutex);
-		pthread_mutex_lock(&coder->left->mutex);
+		*first = coder->right;
+		*second = coder->left;
 	}
 }
 
-void	unlock_dongle_pair(t_coder *coder)
+void	remove_from_queues(t_coder *coder)
 {
-	pthread_mutex_unlock(&coder->left->mutex);
-	pthread_mutex_unlock(&coder->right->mutex);
+	if (coder->left == coder->right)
+	{
+		heap_remove_index(coder->left->queue,
+			heap_find_index(coder->left->queue, coder));
+		return ;
+	}
+	heap_remove_index(coder->left->queue,
+		heap_find_index(coder->left->queue, coder));
+	heap_remove_index(coder->right->queue,
+		heap_find_index(coder->right->queue, coder));
 }
 
-void	leave_queues(t_coder *coder)
+void	lock_dongles(t_dongle *first, t_dongle *second, int heap_lock)
 {
-	lock_dongle_pair(coder);
-	heap_remove(&coder->left->queue, coder, coder->sim->cfg.edf);
-	heap_remove(&coder->right->queue, coder, coder->sim->cfg.edf);
-	notify_dongle_waiters(coder->left);
-	notify_dongle_waiters(coder->right);
-	unlock_dongle_pair(coder);
+	if (heap_lock)
+	{
+		pthread_mutex_lock(&first->queue_mutex);
+		pthread_mutex_lock(&second->queue_mutex);
+	}
+	pthread_mutex_lock(&first->mutex);
+	pthread_mutex_lock(&second->mutex);
 }
 
-void	release_dongles(t_coder *coder)
+void	unlock_dongles(t_dongle *first, t_dongle *second, int heap_lock)
 {
-	long long	ready_at;
-
-	lock_dongle_pair(coder);
-	ready_at = current_time_ms() + coder->sim->cfg.cooldown;
-	coder->left->busy = 0;
-	coder->right->busy = 0;
-	coder->left->ready_at = ready_at;
-	coder->right->ready_at = ready_at;
-	notify_dongle_waiters(coder->left);
-	notify_dongle_waiters(coder->right);
-	unlock_dongle_pair(coder);
+	if (heap_lock)
+	{
+		pthread_mutex_unlock(&second->queue_mutex);
+		pthread_mutex_unlock(&first->queue_mutex);
+	}
+	pthread_mutex_unlock(&second->mutex);
+	pthread_mutex_unlock(&first->mutex);
 }

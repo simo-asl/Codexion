@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/14 09:55:18 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/08/11 22:05:00 by mel-asla         ###   ########.fr       */
+/*   Created: 2026/04/13 17:42:22 by mel-asla          #+#    #+#             */
+/*   Updated: 2026/08/14 13:37:12 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,48 +14,24 @@
 
 long long	current_time_ms(void)
 {
-	struct timeval	tv;
+	long long		current_time;
+	struct timeval	time_value;
 
-	if (gettimeofday(&tv, NULL))
-		return (0);
-	return ((long long)tv.tv_sec * 1000 + tv.tv_usec / 1000);
+	if (gettimeofday(&time_value, NULL) == -1)
+		return (1);
+	current_time = (time_value.tv_sec * 1000) + (time_value.tv_usec / 1000);
+	return (current_time);
 }
 
-void	interruptible_sleep(t_sim *sim, long long duration_ms)
+void	interruptible_sleep(long long time_to_sleep, t_sim *sim)
 {
-	long long	wake_at;
+	long long	start_time;
 
-	wake_at = current_time_ms() + duration_ms;
-	while (!simulation_stopped(sim) && current_time_ms() < wake_at)
-		timed_wait_until(sim, wake_at);
-}
-
-void	timed_wait_until(t_sim *sim, long long wake_at)
-{
-	struct timespec	wake_time;
-
-	wake_time.tv_sec = wake_at / 1000;
-	wake_time.tv_nsec = (wake_at % 1000) * 1000000;
-	pthread_mutex_lock(&sim->state);
-	if (!sim->stop)
-		pthread_cond_timedwait(&sim->state_changed, &sim->state, &wake_time);
-	pthread_mutex_unlock(&sim->state);
-}
-
-int	simulation_stopped(t_sim *sim)
-{
-	int	value;
-
-	pthread_mutex_lock(&sim->state);
-	value = sim->stop;
-	pthread_mutex_unlock(&sim->state);
-	return (value);
-}
-
-void	stop_simulation(t_sim *sim)
-{
-	pthread_mutex_lock(&sim->state);
-	sim->stop = 1;
-	pthread_cond_broadcast(&sim->state_changed);
-	pthread_mutex_unlock(&sim->state);
+	start_time = current_time_ms();
+	while ((current_time_ms() - start_time) < time_to_sleep)
+	{
+		if (simulation_stopped(sim))
+			break ;
+		usleep(50);
+	}
 }

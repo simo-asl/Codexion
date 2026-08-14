@@ -3,64 +3,107 @@
 /*                                                        :::      ::::::::   */
 /*   heap.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mel-asla <mel-asla <marvin@42.fr>>         +#+  +:+       +#+        */
+/*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/14 11:05:39 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/08/12 01:54:01 by mel-asla         ###   ########.fr       */
+/*   Created: 2026/04/24 14:06:00 by mel-asla          #+#    #+#             */
+/*   Updated: 2026/08/14 13:37:12 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-int	has_higher_priority(t_coder *a, t_coder *b, int edf)
+static int	scheduler_precedes(t_heap *heap, t_coder *a, t_coder *b)
 {
-	if (edf && a->deadline != b->deadline)
+	if (heap->is_edf == FIFO)
+	{
+		if (a->requested_at == b->requested_at)
+			return (a->id < b->id);
+		return (a->requested_at < b->requested_at);
+	}
+	else
+	{
+		if (a->deadline == b->deadline)
+		{
+			if (a->compile_count == b->compile_count)
+				return (a->requested_at < b->requested_at);
+			return (a->compile_count < b->compile_count);
+		}
 		return (a->deadline < b->deadline);
-	if (edf && a->compiled != b->compiled)
-		return (a->compiled < b->compiled);
-	if (a->ticket != b->ticket)
-		return (a->ticket < b->ticket);
-	return (a->id < b->id);
+	}
 }
 
-static void	swap(t_coder **a, t_coder **b)
+void	heap_up(t_heap *heap, int idx)
 {
+	int		parent;
 	t_coder	*tmp;
 
-	tmp = *a;
-	*a = *b;
-	*b = tmp;
-}
-
-void	heap_up(t_heap *heap, int i, int edf)
-{
-	int	parent;
-
-	while (i > 0)
+	while (idx > 0)
 	{
-		parent = (i - 1) / 2;
-		if (!has_higher_priority(heap->item[i], heap->item[parent], edf))
+		parent = (idx - 1) / 2;
+		if (!scheduler_precedes(heap, heap->item[idx], heap->item[parent]))
 			break ;
-		swap(&heap->item[i], &heap->item[parent]);
-		i = parent;
+		tmp = heap->item[idx];
+		heap->item[idx] = heap->item[parent];
+		heap->item[parent] = tmp;
+		idx = parent;
 	}
 }
 
-void	heap_down(t_heap *heap, int i, int edf)
+void	heap_down(t_heap *heap, int idx, int size)
 {
-	int	left;
-	int	best;
+	int		left;
+	int		right;
+	int		best;
+	t_coder	*tmp;
 
-	while (i * 2 + 1 < heap->size)
+	while (1)
 	{
-		left = i * 2 + 1;
-		best = left;
-		if (left + 1 < heap->size
-			&& has_higher_priority(heap->item[left + 1], heap->item[left], edf))
-			best = left + 1;
-		if (!has_higher_priority(heap->item[best], heap->item[i], edf))
+		left = 2 * idx + 1;
+		right = 2 * idx + 2;
+		best = idx;
+		if (left < size && scheduler_precedes(heap,
+				heap->item[left], heap->item[best]))
+			best = left;
+		if (right < size && scheduler_precedes(heap,
+				heap->item[right], heap->item[best]))
+			best = right;
+		if (best == idx)
 			break ;
-		swap(&heap->item[i], &heap->item[best]);
-		i = best;
+		tmp = heap->item[idx];
+		heap->item[idx] = heap->item[best];
+		heap->item[best] = tmp;
+		idx = best;
 	}
+}
+
+void	heap_remove_index(t_heap *heap, int index)
+{
+	if (!heap || index < 0 || index >= heap->size)
+		return ;
+	heap->size--;
+	if (index == heap->size)
+		return ;
+	heap->item[index] = heap->item[heap->size];
+	heap_down(heap, index, heap->size);
+}
+
+t_heap	*create_heap(int capacity, int is_edf)
+{
+	t_heap	*heap;
+
+	if (capacity <= 0)
+		return (NULL);
+	heap = malloc(sizeof(t_heap));
+	if (!heap)
+		return (NULL);
+	heap->item = malloc(sizeof(t_coder *) * capacity);
+	if (!heap->item)
+	{
+		free(heap);
+		return (NULL);
+	}
+	heap->capacity = capacity;
+	heap->size = 0;
+	heap->is_edf = is_edf;
+	return (heap);
 }

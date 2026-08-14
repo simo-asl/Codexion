@@ -5,76 +5,96 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/14 10:17:06 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/08/09 21:17:00 by mel-asla         ###   ########.fr       */
+/*   Created: 2026/04/12 20:37:08 by mel-asla          #+#    #+#             */
+/*   Updated: 2026/08/14 13:37:12 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-static int	init_shared(t_sim *sim)
+static int	init_shared_sync(t_sim *sim)
 {
-	if (pthread_mutex_init(&sim->state, NULL))
-		return (1);
-	sim->state_ready = 1;
-	if (pthread_mutex_init(&sim->log, NULL))
-		return (1);
-	sim->log_ready = 1;
-	if (pthread_cond_init(&sim->state_changed, NULL))
-		return (1);
-	sim->state_cond_ready = 1;
-	return (0);
+	if (pthread_mutex_init(&sim->log_mutex, NULL) != 0)
+		return (FAIL);
+	sim->log_mutex_ready = 1;
+	if (pthread_mutex_init(&sim->state_mutex, NULL) != 0)
+		return (FAIL);
+	sim->state_mutex_ready = 1;
+	if (pthread_cond_init(&sim->start_condition, NULL) != 0)
+		return (FAIL);
+	sim->start_condition_ready = 1;
+	return (SUCCESS);
+}
+
+static int	allocate_arrays(t_sim *sim)
+{
+	sim->dongles = malloc(sizeof(t_dongle) * sim->config.coder_count);
+	if (!sim->dongles)
+		return (FAIL);
+	memset(sim->dongles, 0, sizeof(t_dongle) * sim->config.coder_count);
+	sim->coders = malloc(sizeof(t_coder) * sim->config.coder_count);
+	if (!sim->coders)
+	{
+		return (FAIL);
+	}
+	memset(sim->coders, 0, sizeof(t_coder) * sim->config.coder_count);
+	return (SUCCESS);
 }
 
 static int	init_dongles(t_sim *sim)
 {
-	int	i;
+	int	index;
 
-	sim->dongles = malloc(sizeof(t_dongle) * sim->cfg.number);
-	if (!sim->dongles)
-		return (1);
-	memset(sim->dongles, 0, sizeof(t_dongle) * sim->cfg.number);
-	i = 0;
-	while (i < sim->cfg.number)
+	index = 0;
+	while (index < sim->config.coder_count)
 	{
-		sim->dongles[i].queue.capacity = 2;
-		sim->dongles[i].queue.item = malloc(sizeof(t_coder *)
-				* sim->dongles[i].queue.capacity);
-		if (!sim->dongles[i].queue.item
-			|| pthread_mutex_init(&sim->dongles[i].mutex, NULL))
-			return (1);
-		sim->dongles[i].mutex_ready = 1;
-		if (pthread_cond_init(&sim->dongles[i].resource_changed, NULL))
-			return (1);
-		sim->dongles[i].change_cond_ready = 1;
-		i++;
+		sim->dongles[index].busy = 0;
+		sim->dongles[index].ready_at = 0;
+		sim->dongles[index].queue_mutex_ready = 0;
+		sim->dongles[index].mutex_ready = 0;
+		if (pthread_mutex_init(&sim->dongles[index].mutex, NULL) != 0)
+			return (FAIL);
+		sim->dongles[index].mutex_ready = 1;
+		sim->dongles[index].queue = create_heap(2, sim->config.is_edf);
+		if (!sim->dongles[index].queue)
+			return (FAIL);
+		if (pthread_mutex_init(&sim->dongles[index].queue_mutex, NULL) != 0)
+			return (FAIL);
+		sim->dongles[index].queue_mutex_ready = 1;
+		index++;
 	}
-	return (0);
+	return (SUCCESS);
 }
 
 static int	init_coders(t_sim *sim)
 {
-	int	i;
+	int	index;
+	int	next_index;
 
-	sim->coders = malloc(sizeof(t_coder) * sim->cfg.number);
-	if (!sim->coders)
-		return (1);
-	memset(sim->coders, 0, sizeof(t_coder) * sim->cfg.number);
-	i = 0;
-	while (i < sim->cfg.number)
+	index = 0;
+	while (index < sim->config.coder_count)
 	{
-		sim->coders[i].id = i + 1;
-		sim->coders[i].right = &sim->dongles[i];
-		sim->coders[i].left = &sim->dongles[(i + 1) % sim->cfg.number];
-		sim->coders[i].sim = sim;
-		i++;
+		sim->coders[index].state_mutex_ready = 0;
+		next_index = (index + 1) % sim->config.coder_count;
+		sim->coders[index].id = index + 1;
+		sim->coders[index].compile_count = 0;
+		sim->coders[index].right = &sim->dongles[index];
+		sim->coders[index].left = &sim->dongles[next_index];
+		sim->coders[index].requested_at = 0;
+		sim->coders[index].sim = sim;
+		if (pthread_mutex_init(&sim->coders[index].state_mutex, NULL) != 0)
+			return (FAIL);
+		sim->coders[index].state_mutex_ready = 1;
+		index++;
 	}
-	return (0);
+	return (SUCCESS);
 }
 
 int	initialize_simulation(t_sim *sim)
 {
-	if (init_shared(sim) || init_dongles(sim) || init_coders(sim))
-		return (1);
-	return (0);
+	if (init_shared_sync(sim) || allocate_arrays(sim) != SUCCESS
+		|| init_dongles(sim) != SUCCESS
+		|| init_coders(sim) != SUCCESS)
+		return (FAIL);
+	return (SUCCESS);
 }

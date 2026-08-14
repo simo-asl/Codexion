@@ -5,40 +5,59 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/14 08:12:47 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/08/09 21:18:00 by mel-asla         ###   ########.fr       */
+/*   Created: 2026/04/21 13:52:22 by mel-asla          #+#    #+#             */
+/*   Updated: 2026/08/14 13:37:12 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-static void	cleanup_dongles(t_sim *sim)
+void	cleanup_dongles(t_sim *sim, int coder_count)
 {
-	int	i;
+	int	index;
 
-	if (!sim->dongles)
+	if (!sim || !sim->dongles)
 		return ;
-	i = 0;
-	while (i < sim->cfg.number)
+	index = 0;
+	while (index < coder_count)
 	{
-		free(sim->dongles[i].queue.item);
-		if (sim->dongles[i].change_cond_ready)
-			pthread_cond_destroy(&sim->dongles[i].resource_changed);
-		if (sim->dongles[i].mutex_ready)
-			pthread_mutex_destroy(&sim->dongles[i].mutex);
-		i++;
+		if (sim->dongles[index].queue)
+		{
+			free(sim->dongles[index].queue->item);
+			free(sim->dongles[index].queue);
+		}
+		if (sim->dongles[index].queue_mutex_ready)
+			pthread_mutex_destroy(&sim->dongles[index].queue_mutex);
+		if (sim->dongles[index].mutex_ready)
+			pthread_mutex_destroy(&sim->dongles[index].mutex);
+		index++;
 	}
-	free(sim->dongles);
+}
+
+static void	destroy_coder_sync(t_sim *sim)
+{
+	int	index;
+
+	index = 0;
+	while (index < sim->config.coder_count)
+	{
+		if (sim->coders[index].state_mutex_ready)
+			pthread_mutex_destroy(&sim->coders[index].state_mutex);
+		index++;
+	}
 }
 
 void	destroy_simulation(t_sim *sim)
 {
-	cleanup_dongles(sim);
+	if (sim->coders)
+		destroy_coder_sync(sim);
+	cleanup_dongles(sim, sim->config.coder_count);
+	if (sim->log_mutex_ready)
+		pthread_mutex_destroy(&sim->log_mutex);
+	if (sim->start_condition_ready)
+		pthread_cond_destroy(&sim->start_condition);
+	if (sim->state_mutex_ready)
+		pthread_mutex_destroy(&sim->state_mutex);
 	free(sim->coders);
-	if (sim->state_cond_ready)
-		pthread_cond_destroy(&sim->state_changed);
-	if (sim->log_ready)
-		pthread_mutex_destroy(&sim->log);
-	if (sim->state_ready)
-		pthread_mutex_destroy(&sim->state);
+	free(sim->dongles);
 }

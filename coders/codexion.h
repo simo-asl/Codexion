@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   codexion.h                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mel-asla <mel-asla <marvin@42.fr>>         +#+  +:+       +#+        */
+/*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/14 09:34:01 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/08/12 01:53:44 by mel-asla         ###   ########.fr       */
+/*   Created: 2026/04/12 19:16:10 by mel-asla          #+#    #+#             */
+/*   Updated: 2026/08/14 14:07:22 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,105 +19,112 @@
 # include <stdlib.h>
 # include <string.h>
 # include <sys/time.h>
-# include <time.h>
 # include <unistd.h>
 
-typedef struct s_sim		t_sim;
-typedef struct s_coder		t_coder;
+# define FIFO 0
+# define EDF 1
+# define SUCCESS 0
+# define FAIL 1
 
-typedef struct s_heap
-{
-	t_coder	**item;
-	int		size;
-	int		capacity;
-}	t_heap;
-
-typedef struct s_dongle
-{
-	pthread_mutex_t	mutex;
-	pthread_cond_t	resource_changed;
-	t_heap			queue;
-	long long		ready_at;
-	unsigned long	change_version;
-	int				busy;
-	int				mutex_ready;
-	int				change_cond_ready;
-}	t_dongle;
+typedef struct s_coder	t_coder;
+typedef struct s_heap	t_heap;
 
 typedef struct s_config
 {
-	int	number;
-	int	burnout;
-	int	compile;
-	int	debug;
-	int	refactor;
-	int	required;
-	int	cooldown;
-	int	edf;
+	int	coder_count;
+	int	time_to_burnout;
+	int	time_to_compile;
+	int	time_to_debug;
+	int	time_to_refactor;
+	int	compiles_required;
+	int	dongle_cooldown;
+	int	is_edf;
 }	t_config;
+
+typedef struct s_dongle
+{
+	int				busy;
+	long long		ready_at;
+	pthread_mutex_t	mutex;
+	t_heap			*queue;
+	pthread_mutex_t	queue_mutex;
+	int				queue_mutex_ready;
+	int				mutex_ready;
+}	t_dongle;
+
+struct s_heap
+{
+	t_coder	**item;
+	int		capacity;
+	int		size;
+	int		is_edf;
+};
+
+typedef struct s_sim
+{
+	t_config		config;
+	t_dongle		*dongles;
+	t_coder			*coders;
+	pthread_t		monitor_thread;
+	long long		start_time_ms;
+	int				stop_requested;
+	pthread_mutex_t	state_mutex;
+	pthread_cond_t	start_condition;
+	pthread_mutex_t	log_mutex;
+	int				state_mutex_ready;
+	int				start_condition_ready;
+	int				log_mutex_ready;
+}	t_sim;
 
 struct s_coder
 {
-	int			id;
-	pthread_t	thread;
-	t_dongle	*left;
-	t_dongle	*right;
-	t_sim		*sim;
-	long long	deadline;
-	long long	compile_start;
-	long long	ticket;
-	int			compiled;
+	long long		id;
+	long long		deadline;
+	t_dongle		*left;
+	t_dongle		*right;
+	long long		requested_at;
+	pthread_t		thread;
+	pthread_mutex_t	state_mutex;
+	int				compile_count;
+	t_sim			*sim;
+	int				state_mutex_ready;
 };
 
-struct s_sim
-{
-	t_config		cfg;
-	t_coder			*coders;
-	t_dongle		*dongles;
-	pthread_t		monitor;
-	pthread_mutex_t	state;
-	pthread_mutex_t	log;
-	pthread_cond_t	state_changed;
-	long long		start;
-	long long		next_ticket;
-	int				stop;
-	int				state_ready;
-	int				log_ready;
-	int				state_cond_ready;
-};
-
-int			parse_arguments(t_config *cfg, int ac, char **av);
+int			parse_arguments(t_config *config, int ac, char **av);
 int			initialize_simulation(t_sim *sim);
 int			run_simulation(t_sim *sim);
 void		destroy_simulation(t_sim *sim);
+void		*monitor_thread(void *argument);
+void		*coder_thread(void *argument);
 
-void		*coder_thread(void *arg);
-void		*monitor_thread(void *arg);
-void		wait_for_start(t_coder *coder);
-void		startup_delay(t_coder *coder);
-
+void		compile_code(t_coder *coder);
+void		do_other_work(t_coder *coder);
 int			request_dongles(t_coder *coder);
 void		release_dongles(t_coder *coder);
-void		lock_dongle_pair(t_coder *coder);
-void		unlock_dongle_pair(t_coder *coder);
-void		leave_queues(t_coder *coder);
-void		notify_dongle_waiters(t_dongle *dongle);
-t_dongle	*select_blocking_dongle(t_coder *coder, long long now,
-				unsigned long *observed_version, long long *wake_at);
-void		wait_on_dongle(t_dongle *dongle,
-				unsigned long observed_version, long long wake_at);
+int			is_queue_head(t_dongle *dongle, t_coder *coder);
+void		order_dongles(t_coder *coder, t_dongle **first,
+				t_dongle **second);
+void		remove_from_queues(t_coder *coder);
+void		lock_dongles(t_dongle *first, t_dongle *second,
+				int lock_queue);
+void		unlock_dongles(t_dongle *first, t_dongle *second,
+				int lock_queue);
 
-int			has_higher_priority(t_coder *a, t_coder *b, int edf);
-int			heap_push(t_heap *heap, t_coder *coder, int edf);
-void		heap_remove(t_heap *heap, t_coder *coder, int edf);
-void		heap_up(t_heap *heap, int i, int edf);
-void		heap_down(t_heap *heap, int i, int edf);
+t_heap		*create_heap(int capacity, int is_edf);
+int			heap_is_empty(t_heap *heap);
+int			heap_is_full(t_heap *heap);
+int			heap_push(t_heap *heap, t_coder *coder);
+void		heap_up(t_heap *heap, int index);
+void		heap_down(t_heap *heap, int index, int size);
+void		heap_remove_index(t_heap *heap, int index);
+int			heap_find_index(t_heap *heap, t_coder *coder);
 
-long long	current_time_ms(void);
-void		interruptible_sleep(t_sim *sim, long long duration_ms);
-void		timed_wait_until(t_sim *sim, long long wake_at);
+int			join_coder_threads(t_sim *sim, int end);
 int			simulation_stopped(t_sim *sim);
 void		stop_simulation(t_sim *sim);
-void		print_coder_state(t_coder *coder, const char *text);
+void		cleanup_dongles(t_sim *sim, int coder_count);
+long long	current_time_ms(void);
+void		interruptible_sleep(long long duration, t_sim *sim);
+void		print_coder_state(t_coder *coder, const char *action);
 
 #endif
