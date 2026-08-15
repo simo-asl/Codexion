@@ -48,7 +48,7 @@ AI was used to review synchronization logic, suggest edge and stress tests, and 
 - **Cooldown:** a released dongle cannot be reused before its cooldown expires.
 - **Burnout:** a dedicated monitor checks coder deadlines and stops the simulation when needed.
 - **Logging:** a log mutex prevents messages from being mixed together.
-- **One coder:** the coder takes the single available dongle once and waits until burnout without locking it twice.
+- **One coder:** with only one dongle available and two required for compiling, the coder cannot compile and eventually burns out. The implementation avoids trying to acquire the same dongle twice.
 
 ## Thread synchronization mechanisms
 
