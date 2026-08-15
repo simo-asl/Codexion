@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   dongle_pair.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mel-asla <mel-asla <marvin@42.fr>>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/07 10:10:00 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/08/14 13:37:12 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/08/15 17:25:57 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,12 +37,6 @@ void	order_dongles(t_coder *coder, t_dongle **first, t_dongle **second)
 
 void	remove_from_queues(t_coder *coder)
 {
-	if (coder->left == coder->right)
-	{
-		heap_remove_index(coder->left->queue,
-			heap_find_index(coder->left->queue, coder));
-		return ;
-	}
 	heap_remove_index(coder->left->queue,
 		heap_find_index(coder->left->queue, coder));
 	heap_remove_index(coder->right->queue,
