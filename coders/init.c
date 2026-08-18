@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   init.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mel-asla <mel-asla@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mel-asla <mel-asla <marvin@42.fr>>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/12 20:37:08 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/08/14 13:37:12 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/08/18 22:13:00 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,10 +48,6 @@ static int	init_dongles(t_sim *sim)
 	index = 0;
 	while (index < sim->config.coder_count)
 	{
-		sim->dongles[index].busy = 0;
-		sim->dongles[index].ready_at = 0;
-		sim->dongles[index].queue_mutex_ready = 0;
-		sim->dongles[index].mutex_ready = 0;
 		if (pthread_mutex_init(&sim->dongles[index].mutex, NULL) != 0)
 			return (FAIL);
 		sim->dongles[index].mutex_ready = 1;
@@ -74,13 +70,10 @@ static int	init_coders(t_sim *sim)
 	index = 0;
 	while (index < sim->config.coder_count)
 	{
-		sim->coders[index].state_mutex_ready = 0;
 		next_index = (index + 1) % sim->config.coder_count;
 		sim->coders[index].id = index + 1;
-		sim->coders[index].compile_count = 0;
 		sim->coders[index].right = &sim->dongles[index];
 		sim->coders[index].left = &sim->dongles[next_index];
-		sim->coders[index].requested_at = 0;
 		sim->coders[index].sim = sim;
 		if (pthread_mutex_init(&sim->coders[index].state_mutex, NULL) != 0)
 			return (FAIL);
