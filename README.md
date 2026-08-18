@@ -37,6 +37,7 @@ make re
 - POSIX threads documentation (`pthread_create`, mutexes and condition variables)
 - Linux manual pages for `gettimeofday` and `usleep`
 - Binary heap / priority queue documentation
+- https://dev.to/yel-bakk/codexion-4fk8
 - EDF scheduling references
 
 AI was used to review synchronization logic, suggest edge and stress tests, and help simplify the code. The final implementation was reviewed and tested against the project subject.
