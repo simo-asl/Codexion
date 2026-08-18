@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   init.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mel-asla <mel-asla <marvin@42.fr>>         +#+  +:+       +#+        */
+/*   By: mel-asla <mel-asla <marvin@42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/12 20:37:08 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/08/18 22:13:00 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/08/19 00:15:48 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,7 +70,9 @@ static int	init_coders(t_sim *sim)
 	index = 0;
 	while (index < sim->config.coder_count)
 	{
-		next_index = (index + 1) % sim->config.coder_count;
+		next_index = index + 1;
+		if (next_index == sim->config.coder_count)
+			next_index = 0;
 		sim->coders[index].id = index + 1;
 		sim->coders[index].right = &sim->dongles[index];
 		sim->coders[index].left = &sim->dongles[next_index];
