@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mel-asla <mel-asla <marvin@42.fr>>         +#+  +:+       +#+        */
+/*   By: mel-asla <mel-asla <marvin@42.fr>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 21:56:33 by mel-asla          #+#    #+#             */
-/*   Updated: 2026/08/14 14:16:17 by mel-asla         ###   ########.fr       */
+/*   Updated: 2026/08/19 19:37:14 by mel-asla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,7 +63,7 @@ static int	prepare_app(t_sim *sim, int argc, char **argv)
 	}
 	if (initialize_simulation(sim) != SUCCESS)
 	{
-		write(2, "Error: initialization failed\n", 25);
+		write(2, "Error: initialization failed\n", 29);
 		return (FAIL);
 	}
 	return (SUCCESS);
@@ -76,7 +76,7 @@ static int	run_app(int argc, char **argv)
 	sim = malloc(sizeof(t_sim));
 	if (!sim)
 	{
-		write(2, "Error: allocation failed\n", 25);
+		write(2, "Error: sim allocation failed\n", 29);
 		return (FAIL);
 	}
 	memset(sim, 0, sizeof(t_sim));
